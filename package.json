@@ -1,0 +1,22 @@
+{
+  "name": "meng",
+  "version": "1.0.0",
+  "description": "react unidirectional lib",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/huangbinjie/meng.git"
+  },
+  "keywords": [
+    "react"
+  ],
+  "author": "coral",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/huangbinjie/meng/issues"
+  },
+  "homepage": "https://github.com/huangbinjie/meng#readme"
+}
