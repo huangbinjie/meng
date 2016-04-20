@@ -4,16 +4,16 @@ import { createElement, Component, ComponentClass } from 'react'
 const subject = new Subject()
 const Store = <any>{}
 
-Store.dispatch = (state: Object) => subject.next(state)
+Store.setState = (state: Object) => subject.next(state)
 
 type mapState = <T>(state: Object) => T
 type store = {
   state: Object,
-  dispatch: Function
+  setState: Function
 }
 
 export const connect = <T, S>(mapState: mapState, initialState?: Object) =>
-  (component: ComponentClass<T> | any): ComponentClass <any> => {
+  (component: ComponentClass<T> | any): ComponentClass<any> => {
     const currentState = initialState || {}
     const currentStore = <store>{}
     const currentSubject = new Subject()
@@ -37,19 +37,20 @@ export const connect = <T, S>(mapState: mapState, initialState?: Object) =>
         })
 
         currentStore.state = currentState
-        currentStore.dispatch = (state: Object) => currentSubject.next(state)
+        currentStore.setState = (state: Object) => currentSubject.next(state)
 
         Store[displayName] = currentStore
 
         const keys = Object.keys(ConnectComponent.resource)
 
-        keys.map(key => {
-          ConnectComponent.resource[key].subscribe(x => currentStore.dispatch({ [key]: x }), y => currentStore.dispatch({ [key]: y }))
+        keys.map((key: any) => {
+          if (ConnectComponent.resource[key]._isScalar) ConnectComponent.resource[key].subscribe(x => currentStore.setState({ [key]: x }), y => currentStore.setState({ [key]: y }))
+          else currentStore.setState({ [key]: ConnectComponent.resource[key] })
         })
 
       }
       render() {
-        const props = Object.assign({ dispatch: Store[displayName].dispatch }, this.props, mapState(currentState))
+        const props = Object.assign({ setState: Store[displayName].setState }, this.props, mapState(currentState))
         return createElement(component, props)
       }
     }

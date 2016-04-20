@@ -8,7 +8,7 @@ var rxjs_1 = require('rxjs');
 var react_1 = require('react');
 var subject = new rxjs_1.Subject();
 var Store = {};
-Store.dispatch = function (state) { return subject.next(state); };
+Store.setState = function (state) { return subject.next(state); };
 exports.connect = function (mapState, initialState) {
     return function (component) {
         var currentState = initialState || {};
@@ -34,15 +34,19 @@ exports.connect = function (mapState, initialState) {
                     _this.setState({ storeState: storeState });
                 });
                 currentStore.state = currentState;
-                currentStore.dispatch = function (state) { return currentSubject.next(state); };
+                currentStore.setState = function (state) { return currentSubject.next(state); };
                 Store[displayName] = currentStore;
                 var keys = Object.keys(ConnectComponent.resource);
                 keys.map(function (key) {
-                    ConnectComponent.resource[key].subscribe(function (x) { return currentStore.dispatch((_a = {}, _a[key] = x, _a)); var _a; }, function (y) { return currentStore.dispatch((_a = {}, _a[key] = y, _a)); var _a; });
+                    if (ConnectComponent.resource[key]._isScalar)
+                        ConnectComponent.resource[key].subscribe(function (x) { return currentStore.setState((_a = {}, _a[key] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[key] = y, _a)); var _a; });
+                    else
+                        currentStore.setState((_a = {}, _a[key] = ConnectComponent.resource[key], _a));
+                    var _a;
                 });
             };
             ConnectComponent.prototype.render = function () {
-                var props = Object.assign({ dispatch: Store[displayName].dispatch }, this.props, mapState(currentState));
+                var props = Object.assign({ setState: Store[displayName].setState }, this.props, mapState(currentState));
                 return react_1.createElement(component, props);
             };
             ConnectComponent.displayName = "Connect(" + displayName + ")";
