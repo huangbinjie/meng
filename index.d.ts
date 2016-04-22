@@ -1,6 +1,11 @@
 import { ComponentClass } from 'react';
 declare const Store: any;
-export declare const connect: <T, S>(mapState: <T>(state: Object) => T, initialState?: Object) => (component: any) => ComponentClass<any>;
-export declare const resource: <T>(source: any, name: string) => (Component: any) => any;
+export interface component<P> extends ComponentClass<P> {
+    displayName?: string;
+    name?: string;
+    resource?: Object;
+}
+export declare const lift: (initialState?: Object) => <P>(component: component<P>) => component<any>;
+export declare const resource: (source: any, name: string) => <T>(Component: component<T>) => component<T>;
 export declare const getStore: () => any;
 export default Store;

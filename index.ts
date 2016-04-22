@@ -6,19 +6,23 @@ const Store = <any>{}
 
 Store.setState = (state: Object) => subject.next(state)
 
-type mapState = <T>(state: Object) => T
 type store = {
   state: Object,
   setState: Function
 }
+export interface component<P> extends ComponentClass<P> {
+  displayName?: string
+  name?: string
+  resource?: Object
+}
 
-export const connect = <T, S>(mapState: mapState, initialState?: Object) =>
-  (component: ComponentClass<T> | any): ComponentClass<any> => {
+var ConnectComponent
+
+export const lift = (initialState?: Object) => <P>(component: component<P>): component<any> => {
     const currentState = initialState || {}
     const currentStore = <store>{}
     const currentSubject = new Subject()
     const displayName = component.displayName || component.name
-
     return class ConnectComponent extends Component<any, Object> {
       static displayName = `Connect(${displayName})`
       static resource = {}
@@ -28,12 +32,12 @@ export const connect = <T, S>(mapState: mapState, initialState?: Object) =>
       componentWillMount() {
         currentSubject.subscribe(state => {
           const storeState = Object.assign(currentState, state)
-          this.setState({ storeState })
+          this.setState(storeState)
         })
 
         subject.subscribe(state => {
           const storeState = Object.assign(currentState, state)
-          this.setState({ storeState })
+          this.setState(storeState)
         })
 
         currentStore.state = currentState
@@ -50,14 +54,15 @@ export const connect = <T, S>(mapState: mapState, initialState?: Object) =>
 
       }
       render() {
-        const props = Object.assign({ setState: Store[displayName].setState }, this.props, mapState(currentState))
+        const props = Object.assign({ setState: Store[displayName].setState }, this.props, currentState)
         return createElement(component, props)
       }
     }
+    // return ConnectComponent
   }
 
-export const resource = <T>(source: any, name: string) =>
-  (Component: __React.ComponentClass<T> | any) => {
+export const resource = (source: any, name: string) =>
+  <T>(Component: component<T>) => {
     Component.resource[name] = source
     return Component
   }
