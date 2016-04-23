@@ -10,7 +10,7 @@ type store = {
   state: Object,
   setState: Function
 }
-export interface component<P> extends ComponentClass<P> {
+export interface component<P, S> extends ComponentClass<P> {
   displayName?: string
   name?: string
   resource?: Object
@@ -18,7 +18,7 @@ export interface component<P> extends ComponentClass<P> {
 
 var ConnectComponent
 
-export const lift = (initialState?: Object) => <P>(component: component<P>): component<any> => {
+export const lift = (initialState?: Object) => <P, S>(component: component<P, S>): any => {
     const currentState = initialState || {}
     const currentStore = <store>{}
     const currentSubject = new Subject()
@@ -62,7 +62,7 @@ export const lift = (initialState?: Object) => <P>(component: component<P>): com
   }
 
 export const resource = (source: any, name: string) =>
-  <T>(Component: component<T>) => {
+  <T>(Component: any) => {
     Component.resource[name] = source
     return Component
   }

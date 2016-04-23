@@ -63,4 +63,4 @@ exports.resource = function (source, name) {
 exports.getStore = function () { return Store; };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Store;
-//# sourceMappingURL=connect.js.map
+//# sourceMappingURL=index.js.map

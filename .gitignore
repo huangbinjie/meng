@@ -1,3 +1,4 @@
-de_modules
+node_modules
 .idea
 npm-debug.log
+typings
