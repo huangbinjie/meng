@@ -10,6 +10,7 @@ var react_1 = require('react');
 var subject = new rxjs_1.Subject();
 var Store = {
     state: {},
+    subject: subject,
     setState: function (state, callback) {
         if (callback === void 0) { callback = function () { }; }
         Object.assign(_this.state, state);
@@ -37,8 +38,8 @@ exports.lift = function (initialState) { return function (component) {
                 var storeState = Object.assign(currentState, sub.state);
                 _this.setState(storeState, sub.callback);
             });
-            subject.subscribe(function (state) { return _this.forceUpdate(); });
             currentStore.state = currentState;
+            currentStore.subject = currentSubject;
             currentStore.setState = function (state, callback) {
                 if (callback === void 0) { callback = function () { }; }
                 return currentSubject.next({ state: state, callback: callback });

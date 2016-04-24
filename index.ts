@@ -4,6 +4,7 @@ import { createElement, Component, ComponentClass, StatelessComponent } from 're
 const subject = new Subject()
 const Store = <any>{
   state: {},
+  subject: subject,
   setState: (state: Object, callback = () => { }) => {
     Object.assign(this.state, state)
     callback()
@@ -12,7 +13,8 @@ const Store = <any>{
 }
 type store = {
   state: Object,
-  setState: Function
+  setState: Function,
+  subject: any
 }
 export interface component<P, S> extends ComponentClass<P> {
   displayName?: string
@@ -47,9 +49,8 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
         this.setState(storeState, sub.callback)
       })
 
-      subject.subscribe(state => this.forceUpdate())
-
       currentStore.state = currentState
+      currentStore.subject = currentSubject
       currentStore.setState = (state: Object, callback = () => { }) => currentSubject.next({ state, callback })
 
       Store[displayName] = currentStore
