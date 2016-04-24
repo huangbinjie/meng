@@ -2,7 +2,7 @@ import { Subject } from 'rxjs'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
 
 const subject = new Subject()
-const Store = {
+const Store = <any>{
   state: {},
   setState: (state: Object, callback = () => { }) => {
     Object.assign(this.state, state)
@@ -10,7 +10,6 @@ const Store = {
     subject.next(state)
   }
 }
-
 type store = {
   state: Object,
   setState: Function
