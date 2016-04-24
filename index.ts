@@ -53,13 +53,11 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
       currentStore.setState = (state: Object, callback = () => { }) => currentSubject.next({ state, callback })
 
       Store[displayName] = currentStore
-
-      const keys = Object.keys(ConnectComponent.resource)
-
-      keys.map((key: any) => {
-        if (ConnectComponent.resource[key]._isScalar) ConnectComponent.resource[key].subscribe(x => currentStore.setState({ [key]: x }), y => currentStore.setState({ [key]: y }))
-        else currentStore.setState({ [key]: ConnectComponent.resource[key] })
-      })
+      
+      for(let i in ConnectComponent.resource) {
+        if (ConnectComponent.resource[i]._isScalar) ConnectComponent.resource[i].subscribe(x => currentStore.setState({ [i]: x }), y => currentStore.setState({ [i]: y }))
+        else currentStore.setState({ [i]: ConnectComponent.resource[i] })
+      }
 
     }
     render() {

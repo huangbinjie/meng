@@ -44,14 +44,16 @@ exports.lift = function (initialState) { return function (component) {
                 return currentSubject.next({ state: state, callback: callback });
             };
             Store[displayName] = currentStore;
-            var keys = Object.keys(ConnectComponent.resource);
-            keys.map(function (key) {
-                if (ConnectComponent.resource[key]._isScalar)
-                    ConnectComponent.resource[key].subscribe(function (x) { return currentStore.setState((_a = {}, _a[key] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[key] = y, _a)); var _a; });
+            var _loop_1 = function(i) {
+                if (ConnectComponent.resource[i]._isScalar)
+                    ConnectComponent.resource[i].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
                 else
-                    currentStore.setState((_a = {}, _a[key] = ConnectComponent.resource[key], _a));
-                var _a;
-            });
+                    currentStore.setState((_a = {}, _a[i] = ConnectComponent.resource[i], _a));
+            };
+            for (var i in ConnectComponent.resource) {
+                _loop_1(i);
+            }
+            var _a;
         };
         ConnectComponent.prototype.render = function () {
             var props = Object.assign({ setState: Store[displayName].setState }, this.props, currentState);

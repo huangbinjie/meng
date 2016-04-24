@@ -1,6 +1,6 @@
 {
   "name": "meng",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "react unidirectional lib",
   "main": "index.js",
   "scripts": {
