@@ -45,7 +45,7 @@ exports.lift = function (initialState) { return function (component) {
             };
             Store[displayName] = currentStore;
             var _loop_1 = function(i) {
-                if (ConnectComponent.resource[i]._isScalar)
+                if (ConnectComponent.resource[i] instanceof rxjs_1.Observable)
                     ConnectComponent.resource[i].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
                 else
                     currentStore.setState((_a = {}, _a[i] = ConnectComponent.resource[i], _a));
