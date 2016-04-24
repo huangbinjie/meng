@@ -1,5 +1,5 @@
 import { Subject } from 'rxjs'
-import { createElement, Component, ComponentClass } from 'react'
+import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
 
 const subject = new Subject()
 const Store = {
@@ -11,11 +11,6 @@ const Store = {
   }
 }
 
-// Store.setState = (state: Object, callback = () => {}) => {
-//   Object.assign(Store.state)
-//   subject.next({state,callback})
-// }
-
 type store = {
   state: Object,
   setState: Function
@@ -25,6 +20,9 @@ export interface component<P, S> extends ComponentClass<P> {
   name?: string
   resource?: Object
 }
+export interface Stateless<P> extends StatelessComponent<P> {
+  name?: string
+}
 
 type Action = {
   state: {}
@@ -33,7 +31,7 @@ type Action = {
 
 var ConnectComponent
 
-export const lift = (initialState?: Object) => <P, S>(component: component<P, S>): any => {
+export const lift = (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>): any => {
   const currentState = initialState || {}
   const currentStore = <store>{}
   const currentSubject = new Subject()
