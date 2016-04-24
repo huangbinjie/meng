@@ -25,16 +25,19 @@ exports.lift = function (initialState) { return function (component) {
         };
         ConnectComponent.prototype.componentWillMount = function () {
             var _this = this;
-            currentSubject.subscribe(function (state) {
-                var storeState = Object.assign(currentState, state);
-                _this.setState(storeState);
+            currentSubject.subscribe(function (sub) {
+                var storeState = Object.assign(currentState, sub.state);
+                _this.setState(storeState, sub.callback);
             });
-            subject.subscribe(function (state) {
-                var storeState = Object.assign(currentState, state);
-                _this.setState(storeState);
+            subject.subscribe(function (sub) {
+                var storeState = Object.assign(currentState, sub.state);
+                _this.setState(storeState, sub.callback);
             });
             currentStore.state = currentState;
-            currentStore.setState = function (state) { return currentSubject.next(state); };
+            currentStore.setState = function (state, callback) {
+                if (callback === void 0) { callback = function () { }; }
+                return currentSubject.next({ state: state, callback: callback });
+            };
             Store[displayName] = currentStore;
             var keys = Object.keys(ConnectComponent.resource);
             keys.map(function (key) {

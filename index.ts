@@ -16,6 +16,11 @@ export interface component<P, S> extends ComponentClass<P> {
   resource?: Object
 }
 
+type Action = {
+  state: {}
+  callback: () => any
+}
+
 var ConnectComponent
 
 export const lift = (initialState?: Object) => <P, S>(component: component<P, S>): any => {
@@ -30,18 +35,18 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
         Store[displayName] = null
       }
       componentWillMount() {
-        currentSubject.subscribe(state => {
-          const storeState = Object.assign(currentState, state)
-          this.setState(storeState)
+        currentSubject.subscribe((sub: Action) => {
+          const storeState = Object.assign(currentState, sub.state)
+          this.setState(storeState,sub.callback)
         })
 
-        subject.subscribe(state => {
-          const storeState = Object.assign(currentState, state)
-          this.setState(storeState)
+        subject.subscribe((sub: Action) => {
+          const storeState = Object.assign(currentState, sub.state)
+          this.setState(storeState,sub.callback)
         })
 
         currentStore.state = currentState
-        currentStore.setState = (state: Object) => currentSubject.next(state)
+        currentStore.setState = (state: Object, callback = () => {}) => currentSubject.next({state,callback})
 
         Store[displayName] = currentStore
 
