@@ -4,11 +4,19 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var _this = this;
 var rxjs_1 = require('rxjs');
 var react_1 = require('react');
 var subject = new rxjs_1.Subject();
-var Store = {};
-Store.setState = function (state) { return subject.next(state); };
+var Store = {
+    state: {},
+    setState: function (state, callback) {
+        if (callback === void 0) { callback = function () { }; }
+        Object.assign(_this.state, state);
+        callback();
+        subject.next(state);
+    }
+};
 var ConnectComponent;
 exports.lift = function (initialState) { return function (component) {
     var currentState = initialState || {};
@@ -29,10 +37,7 @@ exports.lift = function (initialState) { return function (component) {
                 var storeState = Object.assign(currentState, sub.state);
                 _this.setState(storeState, sub.callback);
             });
-            subject.subscribe(function (sub) {
-                var storeState = Object.assign(currentState, sub.state);
-                _this.setState(storeState, sub.callback);
-            });
+            subject.subscribe(function (state) { return _this.forceUpdate(); });
             currentStore.state = currentState;
             currentStore.setState = function (state, callback) {
                 if (callback === void 0) { callback = function () { }; }
