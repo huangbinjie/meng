@@ -1,4 +1,5 @@
 import { Subject, Observable } from 'rxjs'
+import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
 
 const subject = new Subject()
@@ -64,7 +65,7 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
 
       for (let i in ConnectComponent.resource) {
         const value = ConnectComponent.resource[i]
-        if (value instanceof Observable) value.subscribe(x => currentStore.setState({ [i]: x }), y => currentStore.setState({ [i]: y }))
+        if (value instanceof AjaxObservable) value.subscribe((x: AjaxResponse) => currentStore.setState({ [i]: x.response }), y => currentStore.setState({ [i]: y }))
         else if (value instanceof StoreConstructor) {
           currentStore.setState({ [i]: value.state })
           value["@@subject"].subscribe(x => currentStore.setState({ [i]: value.state }))

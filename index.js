@@ -5,6 +5,7 @@ var __extends = (this && this.__extends) || function (d, b) {
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
 var rxjs_1 = require('rxjs');
+var AjaxObservable_1 = require('rxjs/observable/dom/AjaxObservable');
 var react_1 = require('react');
 var subject = new rxjs_1.Subject();
 var StoreConstructor = (function () {
@@ -48,8 +49,8 @@ exports.lift = function (initialState) { return function (component) {
             Store[displayName] = currentStore;
             var _loop_1 = function(i) {
                 var value = ConnectComponent.resource[i];
-                if (value instanceof rxjs_1.Observable)
-                    value.subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
+                if (value instanceof AjaxObservable_1.AjaxObservable)
+                    value.subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x.response, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
                 else if (value instanceof StoreConstructor) {
                     currentStore.setState((_a = {}, _a[i] = value.state, _a));
                     value["@@subject"].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = value.state, _a)); var _a; });
