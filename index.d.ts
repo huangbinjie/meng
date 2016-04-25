@@ -1,5 +1,16 @@
 import { ComponentClass, StatelessComponent } from 'react';
-declare const Store: any;
+export interface Store {
+    "state": Object;
+    setState: Function;
+    "@@subject": any;
+}
+export declare class StoreConstructor implements Store {
+    state: Object;
+    setState: Function;
+    "@@subject": any;
+    constructor(state: Object, subject: any, setState: Function);
+}
+declare const Store: StoreConstructor;
 export interface component<P, S> extends ComponentClass<P> {
     displayName?: string;
     name?: string;
@@ -10,5 +21,5 @@ export interface Stateless<P> extends StatelessComponent<P> {
 }
 export declare const lift: (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>) => any;
 export declare const resource: (source: any, name: string) => <T>(Component: any) => any;
-export declare const getStore: () => any;
+export declare const getStore: () => StoreConstructor;
 export default Store;

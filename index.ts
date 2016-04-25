@@ -2,20 +2,30 @@ import { Subject, Observable } from 'rxjs'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
 
 const subject = new Subject()
-const Store = <any>{
-  state: {},
-  subject: subject,
-  setState: (state: Object, callback = () => { }) => {
-    Object.assign(this.state, state)
-    callback()
-    subject.next(state)
+
+export interface Store {
+  "state": Object,
+  setState: Function
+  "@@subject": any
+}
+
+/**
+ * StoreConstructor
+ * all store must instanceof this class
+ */
+export class StoreConstructor implements Store {
+  public "@@subject": any
+  constructor(public state: Object, subject, public setState: Function) {
+    this["@@subject"] = subject
   }
 }
-type store = {
-  state: Object,
-  setState: Function,
-  subject: any
-}
+
+const Store = new StoreConstructor({}, subject, function (state: Object, callback = () => { }) {
+  Object.assign(this.state, state)
+  callback()
+  subject.next(state)
+})
+
 export interface component<P, S> extends ComponentClass<P> {
   displayName?: string
   name?: string
@@ -34,7 +44,6 @@ var ConnectComponent
 
 export const lift = (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>): any => {
   const currentState = initialState || {}
-  const currentStore = <store>{}
   const currentSubject = new Subject()
   const displayName = component.displayName || component.name
   return class ConnectComponent extends Component<any, Object> {
@@ -49,15 +58,18 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
         this.setState(storeState, sub.callback)
       })
 
-      currentStore.state = currentState
-      currentStore.subject = currentSubject
-      currentStore.setState = (state: Object, callback = () => { }) => currentSubject.next({ state, callback })
+      const currentStore = new StoreConstructor(currentState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
 
       Store[displayName] = currentStore
-      
-      for(let i in ConnectComponent.resource) {
-        if (ConnectComponent.resource[i] instanceof Observable) ConnectComponent.resource[i].subscribe(x => currentStore.setState({ [i]: x }), y => currentStore.setState({ [i]: y }))
-        else currentStore.setState({ [i]: ConnectComponent.resource[i] })
+
+      for (let i in ConnectComponent.resource) {
+        const value = ConnectComponent.resource[i]
+        if (value instanceof Observable) value.subscribe(x => currentStore.setState({ [i]: x }), y => currentStore.setState({ [i]: y }))
+        else if (value instanceof StoreConstructor) {
+          currentStore.setState({ [i]: value.state })
+          value["@@subject"].subscribe(x => currentStore.setState({ [i]: value.state }))
+        }
+        else currentStore.setState({ [i]: value })
       }
 
     }

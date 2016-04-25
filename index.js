@@ -4,24 +4,27 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
-var _this = this;
 var rxjs_1 = require('rxjs');
 var react_1 = require('react');
 var subject = new rxjs_1.Subject();
-var Store = {
-    state: {},
-    subject: subject,
-    setState: function (state, callback) {
-        if (callback === void 0) { callback = function () { }; }
-        Object.assign(_this.state, state);
-        callback();
-        subject.next(state);
+var StoreConstructor = (function () {
+    function StoreConstructor(state, subject, setState) {
+        this.state = state;
+        this.setState = setState;
+        this["@@subject"] = subject;
     }
-};
+    return StoreConstructor;
+}());
+exports.StoreConstructor = StoreConstructor;
+var Store = new StoreConstructor({}, subject, function (state, callback) {
+    if (callback === void 0) { callback = function () { }; }
+    Object.assign(this.state, state);
+    callback();
+    subject.next(state);
+});
 var ConnectComponent;
 exports.lift = function (initialState) { return function (component) {
     var currentState = initialState || {};
-    var currentStore = {};
     var currentSubject = new rxjs_1.Subject();
     var displayName = component.displayName || component.name;
     return (function (_super) {
@@ -38,23 +41,26 @@ exports.lift = function (initialState) { return function (component) {
                 var storeState = Object.assign(currentState, sub.state);
                 _this.setState(storeState, sub.callback);
             });
-            currentStore.state = currentState;
-            currentStore.subject = currentSubject;
-            currentStore.setState = function (state, callback) {
+            var currentStore = new StoreConstructor(currentState, currentSubject, function (state, callback) {
                 if (callback === void 0) { callback = function () { }; }
-                return currentSubject.next({ state: state, callback: callback });
-            };
+                this["@@subject"].next({ state: state, callback: callback });
+            });
             Store[displayName] = currentStore;
             var _loop_1 = function(i) {
-                if (ConnectComponent.resource[i] instanceof rxjs_1.Observable)
-                    ConnectComponent.resource[i].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
+                var value = ConnectComponent.resource[i];
+                if (value instanceof rxjs_1.Observable)
+                    value.subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
+                else if (value instanceof StoreConstructor) {
+                    currentStore.setState((_a = {}, _a[i] = value.state, _a));
+                    value["@@subject"].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = value.state, _a)); var _a; });
+                }
                 else
-                    currentStore.setState((_a = {}, _a[i] = ConnectComponent.resource[i], _a));
+                    currentStore.setState((_b = {}, _b[i] = value, _b));
             };
             for (var i in ConnectComponent.resource) {
                 _loop_1(i);
             }
-            var _a;
+            var _a, _b;
         };
         ConnectComponent.prototype.render = function () {
             var props = Object.assign({ setState: Store[displayName].setState }, this.props, currentState);
