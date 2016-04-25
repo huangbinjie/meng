@@ -49,8 +49,8 @@ exports.lift = function (initialState) { return function (component) {
             Store[displayName] = currentStore;
             var _loop_1 = function(i) {
                 var value = ConnectComponent.resource[i];
-                if (value instanceof AjaxObservable_1.AjaxObservable)
-                    value.subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = x.response, _a)); var _a; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
+                if (value instanceof rxjs_1.Observable)
+                    value.subscribe(function (x) { return x instanceof AjaxObservable_1.AjaxObservable ? currentStore.setState((_a = {}, _a[i] = x.response, _a)) : currentStore.setState((_b = {}, _b[i] = x, _b)); var _a, _b; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
                 else if (value instanceof StoreConstructor) {
                     currentStore.setState((_a = {}, _a[i] = value.state, _a));
                     value["@@subject"].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = value.state, _a)); var _a; });

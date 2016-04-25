@@ -65,7 +65,7 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
 
       for (let i in ConnectComponent.resource) {
         const value = ConnectComponent.resource[i]
-        if (value instanceof AjaxObservable) value.subscribe((x: AjaxResponse) => currentStore.setState({ [i]: x.response }), y => currentStore.setState({ [i]: y }))
+        if (value instanceof Observable) value.subscribe(x => x instanceof AjaxObservable ? currentStore.setState({ [i]: x.response }) : currentStore.setState({ [i]: x }), y => currentStore.setState({ [i]: y }))
         else if (value instanceof StoreConstructor) {
           currentStore.setState({ [i]: value.state })
           value["@@subject"].subscribe(x => currentStore.setState({ [i]: value.state }))
