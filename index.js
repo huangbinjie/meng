@@ -23,20 +23,20 @@ var Store = new StoreConstructor({}, subject, function (state, callback) {
     callback();
     subject.next(state);
 });
-var ConnectComponent;
+var LiftedComponent;
 exports.lift = function (initialState) { return function (component) {
     var currentState = initialState || {};
     var currentSubject = new rxjs_1.Subject();
     var displayName = component.displayName || component.name;
     return (function (_super) {
-        __extends(ConnectComponent, _super);
-        function ConnectComponent() {
+        __extends(LiftedComponent, _super);
+        function LiftedComponent() {
             _super.apply(this, arguments);
         }
-        ConnectComponent.prototype.componentWillUnmount = function () {
+        LiftedComponent.prototype.componentWillUnmount = function () {
             Store[displayName] = null;
         };
-        ConnectComponent.prototype.componentWillMount = function () {
+        LiftedComponent.prototype.componentWillMount = function () {
             var _this = this;
             currentSubject.subscribe(function (sub) {
                 var storeState = Object.assign(currentState, sub.state);
@@ -47,34 +47,47 @@ exports.lift = function (initialState) { return function (component) {
                 this["@@subject"].next({ state: state, callback: callback });
             });
             Store[displayName] = currentStore;
-            var _loop_1 = function(i) {
-                var value = ConnectComponent.resource[i];
-                if (value instanceof rxjs_1.Observable)
-                    value.subscribe(function (x) { return x instanceof AjaxObservable_1.AjaxObservable ? currentStore.setState((_a = {}, _a[i] = x.response, _a)) : currentStore.setState((_b = {}, _b[i] = x, _b)); var _a, _b; }, function (y) { return currentStore.setState((_a = {}, _a[i] = y, _a)); var _a; });
-                else if (value instanceof StoreConstructor) {
-                    currentStore.setState((_a = {}, _a[i] = value.state, _a));
-                    value["@@subject"].subscribe(function (x) { return currentStore.setState((_a = {}, _a[i] = value.state, _a)); var _a; });
+            LiftedComponent.resource.map(function (obj) {
+                var source = obj.source;
+                var success = obj.success;
+                var fail = obj.fail;
+                if (source instanceof rxjs_1.Observable)
+                    source.subscribe(function (x) {
+                        if (x instanceof AjaxObservable_1.AjaxObservable)
+                            typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(x.response);
+                        else
+                            typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(x);
+                        var _a, _b;
+                    }, function (y) {
+                        if (fail)
+                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
+                        var _a;
+                    });
+                else if (source instanceof StoreConstructor) {
+                    typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state);
+                    source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {
+                        if (fail)
+                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
+                        var _a;
+                    });
                 }
                 else
-                    currentStore.setState((_b = {}, _b[i] = value, _b));
-            };
-            for (var i in ConnectComponent.resource) {
-                _loop_1(i);
-            }
-            var _a, _b;
+                    typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(source);
+                var _a, _b;
+            });
         };
-        ConnectComponent.prototype.render = function () {
-            var props = Object.assign({ setState: Store[displayName].setState }, this.props, currentState);
+        LiftedComponent.prototype.render = function () {
+            var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState);
             return react_1.createElement(component, props);
         };
-        ConnectComponent.displayName = "Connect(" + displayName + ")";
-        ConnectComponent.resource = {};
-        return ConnectComponent;
+        LiftedComponent.displayName = "Lifted(" + displayName + ")";
+        LiftedComponent.resource = [];
+        return LiftedComponent;
     }(react_1.Component));
 }; };
-exports.resource = function (source, name) {
+exports.resource = function (source, success, fail) {
     return function (Component) {
-        Component.resource[name] = source;
+        Component.resource.push({ source: source, success: success, fail: fail });
         return Component;
     };
 };

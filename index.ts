@@ -41,15 +41,15 @@ type Action = {
   callback: () => any
 }
 
-var ConnectComponent
+var LiftedComponent
 
 export const lift = (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>): any => {
   const currentState = initialState || {}
   const currentSubject = new Subject()
   const displayName = component.displayName || component.name
-  return class ConnectComponent extends Component<any, Object> {
-    static displayName = `Connect(${displayName})`
-    static resource = {}
+  return class LiftedComponent extends Component<any, Object> {
+    static displayName = `Lifted(${displayName})`
+    static resource = []
     componentWillUnmount() {
       Store[displayName] = null
     }
@@ -63,28 +63,39 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
 
       Store[displayName] = currentStore
 
-      for (let i in ConnectComponent.resource) {
-        const value = ConnectComponent.resource[i]
-        if (value instanceof Observable) value.subscribe(x => x instanceof AjaxObservable ? currentStore.setState({ [i]: x.response }) : currentStore.setState({ [i]: x }), y => currentStore.setState({ [i]: y }))
-        else if (value instanceof StoreConstructor) {
-          currentStore.setState({ [i]: value.state })
-          value["@@subject"].subscribe(x => currentStore.setState({ [i]: value.state }))
+      LiftedComponent.resource.map(obj => {
+        const source = obj.source
+        const success = obj.success
+        const fail = obj.fail
+        if (source instanceof Observable) source.subscribe(x => {
+          if (x instanceof AjaxObservable) typeof success === "string" ? currentStore.setState({ [success]: x.response }) : success(x.response)
+          else typeof success === "string" ? currentStore.setState({ [success]: x }) : success(x)
+        }, y => {
+          if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y)
+        })
+        else if (source instanceof StoreConstructor) {
+          typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(source.state)
+          source["@@subject"].subscribe(
+            x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(source.state),
+            y => {
+              if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y)
+            })
         }
-        else currentStore.setState({ [i]: value })
-      }
+        else typeof success === "string" ? currentStore.setState({ [success]: source }) : success(source)
+      })
 
     }
     render() {
-      const props = Object.assign({ setState: Store[displayName].setState }, this.props, currentState)
+      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState)
       return createElement(component, props)
     }
   }
   // return ConnectComponent
 }
 
-export const resource = (source: any, name: string) =>
+export const resource = (source: any, success: string | Function, fail?: string | Function) =>
   <T>(Component: any) => {
-    Component.resource[name] = source
+    Component.resource.push({ source, success, fail })
     return Component
   }
 
