@@ -23,7 +23,6 @@ var Store = new StoreConstructor({}, subject, function (state, callback) {
     callback();
     subject.next(state);
 });
-var LiftedComponent;
 exports.lift = function (initialState) { return function (component) {
     var currentState = initialState || {};
     var currentSubject = new rxjs_1.Subject();
@@ -37,16 +36,20 @@ exports.lift = function (initialState) { return function (component) {
             Store[displayName] = null;
         };
         LiftedComponent.prototype.componentWillMount = function () {
-            var _this = this;
-            currentSubject.subscribe(function (sub) {
-                var storeState = Object.assign(currentState, sub.state);
-                _this.setState(storeState, sub.callback);
-            });
             var currentStore = new StoreConstructor(currentState, currentSubject, function (state, callback) {
                 if (callback === void 0) { callback = function () { }; }
                 this["@@subject"].next({ state: state, callback: callback });
             });
             Store[displayName] = currentStore;
+            component.prototype.setState = currentStore.setState.bind(currentStore);
+        };
+        LiftedComponent.prototype.componentDidMount = function () {
+            var _this = this;
+            currentSubject.subscribe(function (sub) {
+                var storeState = Object.assign(currentState, sub.state);
+                _this.setState(storeState, sub.callback);
+            });
+            var currentStore = Store[displayName];
             LiftedComponent.resource.map(function (obj) {
                 var source = obj.source;
                 var success = obj.success;
@@ -63,6 +66,9 @@ exports.lift = function (initialState) { return function (component) {
                             typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
                         var _a;
                     });
+                else if (source instanceof Promise)
+                    source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(x); var _a; }, function (y) { if (fail)
+                        typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y); var _a; });
                 else if (source instanceof StoreConstructor) {
                     typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state);
                     source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {

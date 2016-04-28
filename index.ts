@@ -41,7 +41,7 @@ type Action = {
   callback: () => any
 }
 
-var LiftedComponent
+declare var LiftedComponent: ComponentClass<any>
 
 export const lift = (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>): any => {
   const currentState = initialState || {}
@@ -54,14 +54,18 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
       Store[displayName] = null
     }
     componentWillMount() {
+      const currentStore = new StoreConstructor(currentState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
+
+      Store[displayName] = currentStore
+      component.prototype.setState = currentStore.setState.bind(currentStore)
+    }
+    componentDidMount() {
       currentSubject.subscribe((sub: Action) => {
         const storeState = Object.assign(currentState, sub.state)
         this.setState(storeState, sub.callback)
       })
 
-      const currentStore = new StoreConstructor(currentState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
-
-      Store[displayName] = currentStore
+      const currentStore = Store[displayName]
 
       LiftedComponent.resource.map(obj => {
         const source = obj.source
@@ -73,6 +77,10 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
         }, y => {
           if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y)
         })
+        else if (source instanceof Promise) source.then(
+          x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(x),
+          y => { if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y) }
+        )
         else if (source instanceof StoreConstructor) {
           typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(source.state)
           source["@@subject"].subscribe(
