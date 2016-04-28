@@ -31,25 +31,24 @@ exports.lift = function (initialState) { return function (component) {
         __extends(LiftedComponent, _super);
         function LiftedComponent() {
             _super.apply(this, arguments);
+            this._isMounted = false;
         }
         LiftedComponent.prototype.componentWillUnmount = function () {
             Store[displayName] = null;
+            this._isMounted = false;
         };
         LiftedComponent.prototype.componentWillMount = function () {
+            var _this = this;
             var currentStore = new StoreConstructor(currentState, currentSubject, function (state, callback) {
                 if (callback === void 0) { callback = function () { }; }
                 this["@@subject"].next({ state: state, callback: callback });
             });
             Store[displayName] = currentStore;
             component.prototype.setState = currentStore.setState.bind(currentStore);
-        };
-        LiftedComponent.prototype.componentDidMount = function () {
-            var _this = this;
-            currentSubject.subscribe(function (sub) {
+            currentStore["@@subject"].subscribe(function (sub) {
                 var storeState = Object.assign(currentState, sub.state);
-                _this.setState(storeState, sub.callback);
+                _this._isMounted ? _this.setState(storeState, sub.callback) : currentStore.state = storeState;
             });
-            var currentStore = Store[displayName];
             LiftedComponent.resource.map(function (obj) {
                 var source = obj.source;
                 var success = obj.success;
@@ -81,6 +80,9 @@ exports.lift = function (initialState) { return function (component) {
                     typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(source);
                 var _a, _b;
             });
+        };
+        LiftedComponent.prototype.componentDidMount = function () {
+            this._isMounted = true;
         };
         LiftedComponent.prototype.render = function () {
             var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState);

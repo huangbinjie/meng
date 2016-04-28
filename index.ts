@@ -50,22 +50,20 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
   return class LiftedComponent extends Component<any, Object> {
     static displayName = `Lifted(${displayName})`
     static resource = []
+    _isMounted = false
     componentWillUnmount() {
       Store[displayName] = null
+      this._isMounted = false
     }
     componentWillMount() {
       const currentStore = new StoreConstructor(currentState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
-
       Store[displayName] = currentStore
       component.prototype.setState = currentStore.setState.bind(currentStore)
-    }
-    componentDidMount() {
-      currentSubject.subscribe((sub: Action) => {
-        const storeState = Object.assign(currentState, sub.state)
-        this.setState(storeState, sub.callback)
-      })
 
-      const currentStore = Store[displayName]
+      currentStore["@@subject"].subscribe((sub: Action) => {
+        const storeState = Object.assign(currentState, sub.state)
+        this._isMounted ? this.setState(storeState, sub.callback) : currentStore.state = storeState
+      })
 
       LiftedComponent.resource.map(obj => {
         const source = obj.source
@@ -92,6 +90,9 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
         else typeof success === "string" ? currentStore.setState({ [success]: source }) : success(source)
       })
 
+    }
+    componentDidMount() {
+      this._isMounted = true
     }
     render() {
       const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState)
