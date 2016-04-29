@@ -85,7 +85,7 @@ exports.lift = function (initialState) { return function (component) {
             this._isMounted = true;
         };
         LiftedComponent.prototype.render = function () {
-            var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState);
+            var props = component instanceof component ? Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState) : this.props;
             return react_1.createElement(component, props);
         };
         LiftedComponent.displayName = "Lifted(" + displayName + ")";
