@@ -16,10 +16,23 @@ meng
   @resource("test", "field1")
   @lift({todos: []})
   class App extends React.Component {
+    state = Store["App"].state
     render() {
-      const { setState, field1, field2, todos } from this.props
-      return <div></div>
+      const { field1, field2, todos } = this.state
+      return <div>
+        <Child data={todos}/>
+      </div>
     }
+  }
+  
+  @lift({todo: "test"})
+  class Child extends React.Component {
+    render() {
+      const { data } = this.props
+      const { todo } = this.state
+      return <div onClick={this.clickHandle}>{data}</div>
+    }
+    clickHandle = e => this.setState({todo: "clicked"})
   }
 ```
 
@@ -28,6 +41,7 @@ meng
 把普通组件提升为meng组件的方法，只有一个参数，表示初始化组件状态
 
 ## resource(any|Observable, string|Function, [string|Function])
+给组件注入数据源，只能给已经lift的组件使用
 第一个参数可以接收任意值，也可以是rxjs的Observable, 推荐使用rxjs的ajax方法处理接口。
 第二个参数是当第一个参数成功注入的时候的回调，如果是字符串则表示作为变量注入到组件对应的Store里，如果是函数，则调用这个函数
 第三个参数是第一个参数注入失败之后的回调，如果是字符串则表示作为变量注入到组件对应的Store里，如果是函数，则调用这个函数
@@ -39,6 +53,7 @@ meng
 + `state` 每个store的状态都存在这个容器里面
 + `@@subject` 每个store的事件触发器，它是rxjs的Subject，不懂的可以忽略
 + `setState` 改变当前store的方法，它和react的setState方法一样，甚至包括回调。
+
 
 # 设计思路
 参考我的博客[关于react的数据流新思路](https://github.com/huangbinjie/coral/issues/2)
