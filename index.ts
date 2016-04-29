@@ -95,7 +95,7 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
       this._isMounted = true
     }
     render() {
-      const props = component instanceof component ? Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState) : this.props
+      const props = Object.assign({}, this.props, currentState)
       return createElement(component, props)
     }
   }
