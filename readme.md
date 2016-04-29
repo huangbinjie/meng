@@ -64,8 +64,7 @@ meng
 
 我改变了lifted组件的setState方法，所以如果你还在组件里`this.setState`，其实就相当于`Store.组件名.setState()`。那么你可能要说我如果要局部状态怎么办啊。
 局部状态其实不符合我的思路的，包括redux都推荐用store取代state，如果是封闭状态的组件，你完全可以不lift嘛，如果lifted还矫情什么，一家老小都存store就对了。
-还要注意的是，如果是lifecycle，我是不会把store里的状态注入到props里面的, 你需要手动获取，或者直接把store绑定到你的state上。如果是stateless，状态是直接注入到
-props里的，但是你需要给stateless组件指定displayName。
+如果你还是喜欢`this.state`，那么你可以直接把store绑定到你的state上。如果是stateless，你需要给stateless组件指定displayName。
 # 设计思路
 我的设计思路非常先进，基本是就是未来几年react架构的主要发展方向了。😂
 具体请参考我的博客[关于react的数据流新思路](https://github.com/huangbinjie/coral/issues/2)
