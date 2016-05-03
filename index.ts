@@ -43,10 +43,12 @@ type Action = {
 
 declare var LiftedComponent: ComponentClass<any>
 
-export const lift = (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>): any => {
-  const currentState = initialState || {}
+export const lift = (initialState = {}) => <P, S>(component: component<P, S> | Stateless<P>): any => {
   const currentSubject = new Subject()
   const displayName = component.displayName || component.name
+  const currentStore = new StoreConstructor(initialState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
+  /** hotloader重载导致这段代码不会在WillMount里面执行 */
+  component.prototype.setState = currentStore.setState.bind(currentStore)
   return class LiftedComponent extends Component<any, Object> {
     static displayName = `Lifted(${displayName})`
     static resource = []
@@ -56,12 +58,13 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
       this._isMounted = false
     }
     componentWillMount() {
-      const currentStore = new StoreConstructor(currentState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
       Store[displayName] = currentStore
-      component.prototype.setState = currentStore.setState.bind(currentStore)
-
       currentStore["@@subject"].subscribe((sub: Action) => {
-        const storeState = Object.assign(currentState, sub.state)
+        /**
+         * 这里也不能用Object.assign(currentState, sub.state),
+         * hotloader重载导致resource不执行，currentState造成空值
+         */
+        const storeState = Object.assign(initialState, Store[displayName].state, sub.state)
         this._isMounted ? this.setState(storeState, sub.callback) : currentStore.state = storeState
       })
 
@@ -95,7 +98,10 @@ export const lift = (initialState?: Object) => <P, S>(component: component<P, S>
       this._isMounted = true
     }
     render() {
-      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState)
+      /**
+       * 这里不能用currentState, hotloader重载之后, resource没有被重新执行导致currentState没有被subscribe到
+       */
+      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, Store[displayName].state)
       return createElement(component, props)
     }
   }

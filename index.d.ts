@@ -19,7 +19,7 @@ export interface component<P, S> extends ComponentClass<P> {
 export interface Stateless<P> extends StatelessComponent<P> {
     name?: string;
 }
-export declare const lift: (initialState?: Object) => <P, S>(component: component<P, S> | Stateless<P>) => any;
+export declare const lift: (initialState?: {}) => <P, S>(component: component<P, S> | Stateless<P>) => any;
 export declare const resource: (source: any, success: string | Function, fail?: string | Function) => <T>(Component: any) => any;
 export declare const getStore: () => StoreConstructor;
 export default Store;

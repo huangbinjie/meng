@@ -23,76 +23,78 @@ var Store = new StoreConstructor({}, subject, function (state, callback) {
     callback();
     subject.next(state);
 });
-exports.lift = function (initialState) { return function (component) {
-    var currentState = initialState || {};
-    var currentSubject = new rxjs_1.Subject();
-    var displayName = component.displayName || component.name;
-    return (function (_super) {
-        __extends(LiftedComponent, _super);
-        function LiftedComponent() {
-            _super.apply(this, arguments);
-            this._isMounted = false;
-        }
-        LiftedComponent.prototype.componentWillUnmount = function () {
-            Store[displayName] = null;
-            this._isMounted = false;
-        };
-        LiftedComponent.prototype.componentWillMount = function () {
-            var _this = this;
-            var currentStore = new StoreConstructor(currentState, currentSubject, function (state, callback) {
-                if (callback === void 0) { callback = function () { }; }
-                this["@@subject"].next({ state: state, callback: callback });
-            });
-            Store[displayName] = currentStore;
-            component.prototype.setState = currentStore.setState.bind(currentStore);
-            currentStore["@@subject"].subscribe(function (sub) {
-                var storeState = Object.assign(currentState, sub.state);
-                _this._isMounted ? _this.setState(storeState, sub.callback) : currentStore.state = storeState;
-            });
-            LiftedComponent.resource.map(function (obj) {
-                var source = obj.source;
-                var success = obj.success;
-                var fail = obj.fail;
-                if (source instanceof rxjs_1.Observable)
-                    source.subscribe(function (x) {
-                        if (x instanceof AjaxObservable_1.AjaxObservable)
-                            typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(x.response);
-                        else
-                            typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(x);
-                        var _a, _b;
-                    }, function (y) {
-                        if (fail)
-                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
-                        var _a;
-                    });
-                else if (source instanceof Promise)
-                    source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(x); var _a; }, function (y) { if (fail)
-                        typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y); var _a; });
-                else if (source instanceof StoreConstructor) {
-                    typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state);
-                    source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {
-                        if (fail)
-                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
-                        var _a;
-                    });
-                }
-                else
-                    typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(source);
-                var _a, _b;
-            });
-        };
-        LiftedComponent.prototype.componentDidMount = function () {
-            this._isMounted = true;
-        };
-        LiftedComponent.prototype.render = function () {
-            var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, currentState);
-            return react_1.createElement(component, props);
-        };
-        LiftedComponent.displayName = "Lifted(" + displayName + ")";
-        LiftedComponent.resource = [];
-        return LiftedComponent;
-    }(react_1.Component));
-}; };
+exports.lift = function (initialState) {
+    if (initialState === void 0) { initialState = {}; }
+    return function (component) {
+        var currentSubject = new rxjs_1.Subject();
+        var displayName = component.displayName || component.name;
+        var currentStore = new StoreConstructor(initialState, currentSubject, function (state, callback) {
+            if (callback === void 0) { callback = function () { }; }
+            this["@@subject"].next({ state: state, callback: callback });
+        });
+        component.prototype.setState = currentStore.setState.bind(currentStore);
+        return (function (_super) {
+            __extends(LiftedComponent, _super);
+            function LiftedComponent() {
+                _super.apply(this, arguments);
+                this._isMounted = false;
+            }
+            LiftedComponent.prototype.componentWillUnmount = function () {
+                Store[displayName] = null;
+                this._isMounted = false;
+            };
+            LiftedComponent.prototype.componentWillMount = function () {
+                var _this = this;
+                Store[displayName] = currentStore;
+                currentStore["@@subject"].subscribe(function (sub) {
+                    var storeState = Object.assign(initialState, Store[displayName].state, sub.state);
+                    _this._isMounted ? _this.setState(storeState, sub.callback) : currentStore.state = storeState;
+                });
+                LiftedComponent.resource.map(function (obj) {
+                    var source = obj.source;
+                    var success = obj.success;
+                    var fail = obj.fail;
+                    if (source instanceof rxjs_1.Observable)
+                        source.subscribe(function (x) {
+                            if (x instanceof AjaxObservable_1.AjaxObservable)
+                                typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(x.response);
+                            else
+                                typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(x);
+                            var _a, _b;
+                        }, function (y) {
+                            if (fail)
+                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
+                            var _a;
+                        });
+                    else if (source instanceof Promise)
+                        source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(x); var _a; }, function (y) { if (fail)
+                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y); var _a; });
+                    else if (source instanceof StoreConstructor) {
+                        typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state);
+                        source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {
+                            if (fail)
+                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
+                            var _a;
+                        });
+                    }
+                    else
+                        typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(source);
+                    var _a, _b;
+                });
+            };
+            LiftedComponent.prototype.componentDidMount = function () {
+                this._isMounted = true;
+            };
+            LiftedComponent.prototype.render = function () {
+                var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, Store[displayName].state);
+                return react_1.createElement(component, props);
+            };
+            LiftedComponent.displayName = "Lifted(" + displayName + ")";
+            LiftedComponent.resource = [];
+            return LiftedComponent;
+        }(react_1.Component));
+    };
+};
 exports.resource = function (source, success, fail) {
     return function (Component) {
         Component.resource.push({ source: source, success: success, fail: fail });
