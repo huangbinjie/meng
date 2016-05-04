@@ -28,34 +28,42 @@ exports.lift = function (initialState) {
     return function (component) {
         var currentSubject = new rxjs_1.Subject();
         var displayName = component.displayName || component.name;
-        var currentStore = new StoreConstructor(initialState, currentSubject, function (state, callback) {
-            if (callback === void 0) { callback = function () { }; }
-            this["@@subject"].next({ state: state, callback: callback });
-        });
-        component.prototype.setState = currentStore.setState.bind(currentStore);
         return (function (_super) {
             __extends(LiftedComponent, _super);
             function LiftedComponent() {
                 _super.apply(this, arguments);
                 this._isMounted = false;
+                this.observers = [];
             }
             LiftedComponent.prototype.componentWillUnmount = function () {
                 Store[displayName] = null;
                 this._isMounted = false;
+                this.observers.map(function (observer) {
+                    observer.unsubscribe();
+                    observer.remove(observer);
+                });
+            };
+            LiftedComponent.prototype.componnetRecieveProps = function () {
             };
             LiftedComponent.prototype.componentWillMount = function () {
                 var _this = this;
+                var currentStore = new StoreConstructor(initialState, currentSubject, function (state, callback) {
+                    if (callback === void 0) { callback = function () { }; }
+                    this["@@subject"].next({ state: state, callback: callback });
+                });
+                component.prototype.setState = currentStore.setState.bind(currentStore);
                 Store[displayName] = currentStore;
-                currentStore["@@subject"].subscribe(function (sub) {
+                var observer = currentStore["@@subject"].subscribe(function (sub) {
                     var storeState = Object.assign(initialState, Store[displayName].state, sub.state);
                     _this._isMounted ? _this.setState(storeState, sub.callback) : currentStore.state = storeState;
                 });
+                this.observers.push(observer);
                 LiftedComponent.resource.map(function (obj) {
                     var source = obj.source;
                     var success = obj.success;
                     var fail = obj.fail;
-                    if (source instanceof rxjs_1.Observable)
-                        source.subscribe(function (x) {
+                    if (source instanceof rxjs_1.Observable) {
+                        var observer_1 = source.subscribe(function (x) {
                             if (x instanceof AjaxObservable_1.AjaxObservable)
                                 typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(x.response);
                             else
@@ -66,16 +74,19 @@ exports.lift = function (initialState) {
                                 typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
                             var _a;
                         });
+                        _this.observers.push(observer_1);
+                    }
                     else if (source instanceof Promise)
                         source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(x); var _a; }, function (y) { if (fail)
                             typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y); var _a; });
                     else if (source instanceof StoreConstructor) {
                         typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state);
-                        source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {
+                        var observer_2 = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {
                             if (fail)
                                 typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
                             var _a;
                         });
+                        _this.observers.push(observer_2);
                     }
                     else
                         typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(source);

@@ -1,14 +1,15 @@
+import { Subject } from 'rxjs';
 import { ComponentClass, StatelessComponent } from 'react';
 export interface Store {
     "state": Object;
     setState: Function;
-    "@@subject": any;
+    "@@subject": Subject<Object>;
 }
 export declare class StoreConstructor implements Store {
     state: Object;
     setState: Function;
-    "@@subject": any;
-    constructor(state: Object, subject: any, setState: Function);
+    "@@subject": Subject<Object>;
+    constructor(state: Object, subject: Subject<Object>, setState: Function);
 }
 declare const Store: StoreConstructor;
 export interface component<P, S> extends ComponentClass<P> {
