@@ -63,7 +63,6 @@
 
 我改变了lifted组件的setState方法，所以如果你还在组件里`this.setState`，其实就相当于`Store.组件名.setState()`。那么你可能要说我如果要局部状态怎么办啊。
 局部状态其实不符合我的思路的，包括redux都推荐用store取代state，如果是封闭状态的组件，你完全可以不lift嘛，如果lifted还矫情什么，一家老小都存store就对了。
-可以直接使用`Store.组件名`来访问mounted的组件的状态。组件之间的通讯也是这么实现的，你可以`Store.组件名.setState()`直接修改另一个组件的状态！
 如果你还是喜欢`this.state`，那么你可以直接把store绑定到你的state上。如果是stateless，你需要给stateless组件指定displayName。
 
 ## 设计思路
