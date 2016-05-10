@@ -26,7 +26,6 @@ var Store = new StoreConstructor({}, subject, function (state, callback) {
 exports.lift = function (initialState) {
     if (initialState === void 0) { initialState = {}; }
     return function (component) {
-        var currentSubject = new rxjs_1.Subject();
         var displayName = component.displayName || component.name;
         return (function (_super) {
             __extends(LiftedComponent, _super);
@@ -45,7 +44,7 @@ exports.lift = function (initialState) {
             };
             LiftedComponent.prototype.componentWillMount = function () {
                 var _this = this;
-                var currentStore = new StoreConstructor(initialState, currentSubject, function (state, callback) {
+                var currentStore = new StoreConstructor(Object.assign({}, initialState), new rxjs_1.Subject(), function (state, callback) {
                     if (callback === void 0) { callback = function () { }; }
                     this["@@subject"].next({ state: state, callback: callback });
                 });
