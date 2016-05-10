@@ -43,8 +43,6 @@ exports.lift = function (initialState) {
                     observer.remove(observer);
                 });
             };
-            LiftedComponent.prototype.componnetRecieveProps = function () {
-            };
             LiftedComponent.prototype.componentWillMount = function () {
                 var _this = this;
                 var currentStore = new StoreConstructor(initialState, currentSubject, function (state, callback) {
@@ -54,8 +52,8 @@ exports.lift = function (initialState) {
                 component.prototype.setState = currentStore.setState.bind(currentStore);
                 Store[displayName] = currentStore;
                 var observer = currentStore["@@subject"].subscribe(function (sub) {
-                    var storeState = Object.assign(initialState, Store[displayName].state, sub.state);
-                    _this._isMounted ? _this.setState(storeState, sub.callback) : currentStore.state = storeState;
+                    var storeState = Object.assign(currentStore.state, sub.state);
+                    _this.setState(storeState, sub.callback);
                 });
                 this.observers.push(observer);
                 LiftedComponent.resource.map(function (obj) {

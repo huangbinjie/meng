@@ -54,6 +54,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
     static resource = []
     _isMounted = false
     observers: Subscription[] = [] //存放disposable
+    
     componentWillUnmount() {
       Store[displayName] = null
       this._isMounted = false
@@ -62,16 +63,16 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
         observer.remove(observer)
       })
     }
-    componnetRecieveProps() {
-
-    }
     componentWillMount() {
       const currentStore = new StoreConstructor(initialState, currentSubject, function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
       component.prototype.setState = currentStore.setState.bind(currentStore)
       Store[displayName] = currentStore
       const observer = currentStore["@@subject"].subscribe((sub: Action) => {
-        const storeState = Object.assign(initialState, Store[displayName].state, sub.state)
-        this._isMounted ? this.setState(storeState, sub.callback) : currentStore.state = storeState
+        const storeState = Object.assign(currentStore.state, sub.state)
+        //子组件didmount以后如果使用了setstate，因为父组件LiftedComponent还没有mount，但是事件已经监听了，所以需要把这个行为放入队列，
+        //等父组件加载完成再执行回调, 那么为什么不把这段代码放到didmount里面去，如果子组件触发了个事件，但是父组件因为还没有didmount，
+        //即还没有注册事件而导致没接收到事件，那更糟糕
+        this.setState(storeState, sub.callback)
       })
 
       this.observers.push(observer)
