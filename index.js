@@ -62,31 +62,31 @@ exports.lift = function (initialState) {
                     if (source instanceof rxjs_1.Observable) {
                         var observer_1 = source.subscribe(function (x) {
                             if (x instanceof AjaxObservable_1.AjaxObservable)
-                                typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(x.response);
+                                typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(currentStore, x.response);
                             else
-                                typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(x);
+                                typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(currentStore, x);
                             var _a, _b;
                         }, function (y) {
                             if (fail)
-                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
+                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y);
                             var _a;
                         });
                         _this.observers.push(observer_1);
                     }
                     else if (source instanceof Promise)
-                        source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(x); var _a; }, function (y) { if (fail)
-                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y); var _a; });
+                        source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(currentStore, x); var _a; }, function (y) { if (fail)
+                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y); var _a; });
                     else if (source instanceof StoreConstructor) {
-                        typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state);
-                        var observer_2 = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(source.state); var _a; }, function (y) {
+                        typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, source.state);
+                        var observer_2 = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, source.state); var _a; }, function (y) {
                             if (fail)
-                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(y);
+                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y);
                             var _a;
                         });
                         _this.observers.push(observer_2);
                     }
                     else
-                        typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(source);
+                        typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(currentStore, source);
                     var _a, _b;
                 });
             };

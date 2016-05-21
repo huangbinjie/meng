@@ -6,10 +6,13 @@
   "bundle": "typings/tsd.d.ts",
   "installed": {
     "react/react.d.ts": {
-      "commit": "a7b9b1adbfebf0d3725e81ca25fb8079f9d33f6b"
+      "commit": "e0abafb1a6ff652f7ff967120e312d5c1916eaef"
     },
     "es6-shim/es6-shim.d.ts": {
       "commit": "a7b9b1adbfebf0d3725e81ca25fb8079f9d33f6b"
+    },
+    "react/react-dom.d.ts": {
+      "commit": "e0abafb1a6ff652f7ff967120e312d5c1916eaef"
     }
   }
 }

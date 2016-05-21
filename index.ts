@@ -79,27 +79,27 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
         const fail = obj.fail
         if (source instanceof Observable) {
           const observer = source.subscribe(x => {
-            if (x instanceof AjaxObservable) typeof success === "string" ? currentStore.setState({ [success]: x.response }) : success(x.response)
-            else typeof success === "string" ? currentStore.setState({ [success]: x }) : success(x)
+            if (x instanceof AjaxObservable) typeof success === "string" ? currentStore.setState({ [success]: x.response }) : success(currentStore, x.response)
+            else typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x)
           }, y => {
-            if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y)
+            if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
           })
           this.observers.push(observer)
         }
         else if (source instanceof Promise) source.then(
-          x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(x),
-          y => { if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y) }
+          x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
+          y => { if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y) }
         )
         else if (source instanceof StoreConstructor) {
-          typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(source.state)
+          typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state)
           const observer = source["@@subject"].subscribe(
-            x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(source.state),
+            x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state),
             y => {
-              if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(y)
+              if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
             })
           this.observers.push(observer)
         }
-        else typeof success === "string" ? currentStore.setState({ [success]: source }) : success(source)
+        else typeof success === "string" ? currentStore.setState({ [success]: source }) : success(currentStore, source)
       })
 
     }
@@ -113,8 +113,8 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
   }
   // return ConnectComponent
 }
-
-export const resource = (source: any, success: string | Function, fail?: string | Function) =>
+type ResourceCB = (Store, any) => any
+export const resource = (source: any, success: string | ResourceCB, fail?: string | ResourceCB) =>
   <T>(Component: any) => {
     Component.resource.push({ source, success, fail })
     return Component
