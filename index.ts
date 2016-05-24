@@ -113,7 +113,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
   }
   // return ConnectComponent
 }
-type ResourceCB = (Store, any) => any
+type ResourceCB = (store: Store, any) => any
 export const resource = (source: any, success: string | ResourceCB, fail?: string | ResourceCB) =>
   <T>(Component: any) => {
     Component.resource.push({ source, success, fail })

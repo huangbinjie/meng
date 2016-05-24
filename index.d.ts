@@ -21,6 +21,6 @@ export interface Stateless<P> extends StatelessComponent<P> {
     name?: string;
 }
 export declare const lift: (initialState?: {}) => <P, S>(component: component<P, S> | Stateless<P>) => any;
-export declare const resource: (source: any, success: string | ((Store: any, any: any) => any), fail?: string | ((Store: any, any: any) => any)) => <T>(Component: any) => any;
+export declare const resource: (source: any, success: string | ((store: Store, any: any) => any), fail?: string | ((store: Store, any: any) => any)) => <T>(Component: any) => any;
 export declare const getStore: () => StoreConstructor;
 export default Store;
