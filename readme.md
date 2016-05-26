@@ -44,6 +44,8 @@
 ### lift(initialState)
 
 把普通组件提升为meng组件的方法，只有一个参数，表示初始化组件状态
+为了防止每次props把state里的相同属性覆盖，而导致没必要的修改props，我把state的优先级设定得比props高。
+所以我建议的meng组件是无props传参的，只有`lift state`的组件，当然你也可以通过props传参，但是如果和state重复，会被state覆盖，请注意
 
 ### resource(any|Observable|Promise, string|Function, [string|Function])
 
