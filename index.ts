@@ -107,7 +107,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
       this._isMounted = true
     }
     render() {
-      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, Store[displayName].state, this.props)
+      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, Store[displayName].state)
       return createElement(component, props)
     }
   }
