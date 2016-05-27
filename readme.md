@@ -71,4 +71,4 @@
 ## 设计思路
 
 我的设计思路非常先进，基本是就是未来几年react架构的主要发展方向了。😂
-具体请参考我的博客[关于react的数据流新思路](https://github.com/huangbinjie/coral/issues/2)
+具体请参考我的博客[关于react的数据流新思路](https://github.com/useroriented/useroriented.github.io/blob/master/coral/think-of-react-data-flow.md)
