@@ -19,9 +19,8 @@ var StoreConstructor = (function () {
 exports.StoreConstructor = StoreConstructor;
 var Store = new StoreConstructor({}, subject, function (state, callback) {
     if (callback === void 0) { callback = function () { }; }
-    Object.assign(this.state, state);
-    callback();
     subject.next(state);
+    callback();
 });
 exports.lift = function (initialState) {
     if (initialState === void 0) { initialState = {}; }

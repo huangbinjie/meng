@@ -22,9 +22,8 @@ export class StoreConstructor implements Store {
 }
 
 const Store = new StoreConstructor({}, subject, function (state: Object, callback = () => { }) {
-  Object.assign(this.state, state)
-  callback()
   subject.next(state)
+  callback()
 })
 
 /** dumb组件类型1 */
