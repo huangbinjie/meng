@@ -24,7 +24,7 @@ export class StoreConstructor implements Store {
 const Store = new StoreConstructor({}, subject, function (state: Object, callback = () => { }) {
   Object.assign(this.state, state)
   subject.next(state)
-  callback()  
+  callback()
 })
 
 /** dumb组件类型1 */
@@ -93,7 +93,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
         else if (source instanceof StoreConstructor) {
           typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state)
           const observer = source["@@subject"].subscribe(
-            x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state),
+            x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
             y => {
               if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
             })
@@ -107,7 +107,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
       this._isMounted = true
     }
     render() {
-      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, Store[displayName].state)
+      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, Store[displayName].state, this.props)
       return createElement(component, props)
     }
   }

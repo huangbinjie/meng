@@ -20418,8 +20418,8 @@
 	var Store = new StoreConstructor({}, subject, function (state, callback) {
 	    if (callback === void 0) { callback = function () { }; }
 	    Object.assign(this.state, state);
-	    callback();
 	    subject.next(state);
+	    callback();
 	});
 	exports.lift = function (initialState) {
 	    if (initialState === void 0) { initialState = {}; }
@@ -20476,7 +20476,7 @@
 	                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y); var _a; });
 	                    else if (source instanceof StoreConstructor) {
 	                        typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, source.state);
-	                        var observer_2 = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, source.state); var _a; }, function (y) {
+	                        var observer_2 = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(currentStore, x); var _a; }, function (y) {
 	                            if (fail)
 	                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y);
 	                            var _a;
@@ -20492,7 +20492,7 @@
 	                this._isMounted = true;
 	            };
 	            LiftedComponent.prototype.render = function () {
-	                var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, this.props, Store[displayName].state);
+	                var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, Store[displayName].state, this.props);
 	                return react_1.createElement(component, props);
 	            };
 	            LiftedComponent.displayName = "Lifted(" + displayName + ")";
