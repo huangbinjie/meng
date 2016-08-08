@@ -93,7 +93,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
         else if (source instanceof StoreConstructor) {
           typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state)
           const observer = source["@@subject"].subscribe(
-            x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
+            x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, x),
             y => {
               if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
             })
