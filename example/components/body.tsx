@@ -2,12 +2,19 @@ import * as React from 'react'
 import { createElement, createClass, Component, ComponentClass, ComponentLifecycle } from 'react'
 import Store, { lift, resource, getStore } from '../../'
 
+@resource(props => {
+  console.log(props);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(11111), 3000)
+  })
+}, "lazyProps")
 @resource(Store, "userInfo")
 @lift()
 export default class Body extends React.Component<any, any> {
   state = Store["Body"].state
   render() {
-    const {num = 0, text, data, setState, userInfo} = this.props
+    const {num = 0, text, data, setState, userInfo, lazyProps} = this.props
+    console.log(lazyProps)
     return (
       <div>
         <button onClick = { add(num, setState) }>+</button>

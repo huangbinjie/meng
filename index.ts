@@ -73,34 +73,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
 
       this.observers.push(observer)
 
-      LiftedComponent.resource.map(obj => {
-        const source = obj.source
-        const success = obj.success
-        const fail = obj.fail
-        if (source instanceof Observable) {
-          const observer = source.subscribe(x => {
-            if (x instanceof AjaxObservable) typeof success === "string" ? currentStore.setState({ [success]: x.response }) : success(currentStore, x.response)
-            else typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x)
-          }, y => {
-            if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
-          })
-          this.observers.push(observer)
-        }
-        else if (source instanceof Promise) source.then(
-          x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
-          y => { if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y) }
-        )
-        else if (source instanceof StoreConstructor) {
-          typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state)
-          const observer = source["@@subject"].subscribe(
-            x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, x),
-            y => {
-              if (fail) typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
-            })
-          this.observers.push(observer)
-        }
-        else typeof success === "string" ? currentStore.setState({ [success]: source }) : success(currentStore, source)
-      })
+      LiftedComponent.resource.map(obj => fork.call(this, currentStore, this.props, obj))
 
     }
     componentDidMount() {
@@ -113,6 +86,37 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
   }
   // return ConnectComponent
 }
+
+function fork(currentStore, props, {source, success, fail = () => { } }) {
+  if (source instanceof Observable) {
+    const observer = source.subscribe(x => {
+      if (x instanceof AjaxObservable) typeof success === "string" ? currentStore.setState({ [success]: x.response }) : success(currentStore, x.response)
+      else typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x)
+    }, y => errorHandle(currentStore, fail, y)
+    )
+    return this.observers.push(observer)
+  }
+  if (source instanceof Promise) return source.then(
+    x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
+    y => errorHandle(currentStore, fail, y)
+  )
+  if (source instanceof StoreConstructor) {
+    typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state)
+    const observer = source["@@subject"].subscribe(
+      x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, x),
+      y => errorHandle(currentStore, fail, y)
+    )
+    return this.observers.push(observer)
+  }
+  if (source instanceof Function) {
+    return fork(currentStore, props, { source: source(props), success, fail })
+  }
+
+  typeof success === "string" ? currentStore.setState({ [success]: source }) : success(currentStore, source)
+}
+
+const errorHandle = (currentStore, fail, y) => typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
+
 type ResourceCB = (store: Store, any) => any
 export const resource = (source: any, success: string | ResourceCB, fail?: string | ResourceCB) =>
   <T>(Component: any) => {

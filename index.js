@@ -55,40 +55,7 @@ exports.lift = function (initialState) {
                     _this.setState(storeState, sub.callback);
                 });
                 this.observers.push(observer);
-                LiftedComponent.resource.map(function (obj) {
-                    var source = obj.source;
-                    var success = obj.success;
-                    var fail = obj.fail;
-                    if (source instanceof rxjs_1.Observable) {
-                        var observer_1 = source.subscribe(function (x) {
-                            if (x instanceof AjaxObservable_1.AjaxObservable)
-                                typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(currentStore, x.response);
-                            else
-                                typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(currentStore, x);
-                            var _a, _b;
-                        }, function (y) {
-                            if (fail)
-                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y);
-                            var _a;
-                        });
-                        _this.observers.push(observer_1);
-                    }
-                    else if (source instanceof Promise)
-                        source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(currentStore, x); var _a; }, function (y) { if (fail)
-                            typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y); var _a; });
-                    else if (source instanceof StoreConstructor) {
-                        typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, source.state);
-                        var observer_2 = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, x); var _a; }, function (y) {
-                            if (fail)
-                                typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y);
-                            var _a;
-                        });
-                        _this.observers.push(observer_2);
-                    }
-                    else
-                        typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = source, _b)) : success(currentStore, source);
-                    var _a, _b;
-                });
+                LiftedComponent.resource.map(function (obj) { return fork.call(_this, currentStore, _this.props, obj); });
             };
             LiftedComponent.prototype.componentDidMount = function () {
                 this._isMounted = true;
@@ -103,6 +70,32 @@ exports.lift = function (initialState) {
         }(react_1.Component));
     };
 };
+function fork(currentStore, props, _a) {
+    var source = _a.source, success = _a.success, _b = _a.fail, fail = _b === void 0 ? function () { } : _b;
+    if (source instanceof rxjs_1.Observable) {
+        var observer = source.subscribe(function (x) {
+            if (x instanceof AjaxObservable_1.AjaxObservable)
+                typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x.response, _a)) : success(currentStore, x.response);
+            else
+                typeof success === "string" ? currentStore.setState((_b = {}, _b[success] = x, _b)) : success(currentStore, x);
+            var _a, _b;
+        }, function (y) { return errorHandle(currentStore, fail, y); });
+        return this.observers.push(observer);
+    }
+    if (source instanceof Promise)
+        return source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(currentStore, x); var _a; }, function (y) { return errorHandle(currentStore, fail, y); });
+    if (source instanceof StoreConstructor) {
+        typeof success === "string" ? currentStore.setState((_c = {}, _c[success] = source.state, _c)) : success(currentStore, source.state);
+        var observer = source["@@subject"].subscribe(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = source.state, _a)) : success(currentStore, x); var _a; }, function (y) { return errorHandle(currentStore, fail, y); });
+        return this.observers.push(observer);
+    }
+    if (source instanceof Function) {
+        return fork(currentStore, props, { source: source(props), success: success, fail: fail });
+    }
+    typeof success === "string" ? currentStore.setState((_d = {}, _d[success] = source, _d)) : success(currentStore, source);
+    var _c, _d;
+}
+var errorHandle = function (currentStore, fail, y) { return typeof fail === "string" ? currentStore.setState((_a = {}, _a[fail] = y, _a)) : fail(currentStore, y); var _a; };
 exports.resource = function (source, success, fail) {
     return function (Component) {
         Component.resource.push({ source: source, success: success, fail: fail });

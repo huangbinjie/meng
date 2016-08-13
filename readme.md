@@ -47,10 +47,11 @@
 为了防止每次props把state里的相同属性覆盖，而导致没必要的修改props，我把state的优先级设定得比props高。
 所以我建议的meng组件是无props传参的，只有`lift state`的组件，当然你也可以通过props传参，但是如果和state重复，会被state覆盖，请注意
 
-### resource(any|Observable|Promise, string|Function, [string|Function])
+### resource<T>(any|Observable|Promise|(props) => T , string|Function, [string|Function])
 
 给组件注入数据源，只能给已经lift的组件使用
-第一个参数可以接收任意值，也可以是rxjs的Observable,也可以是promise, 推荐使用rxjs的ajax方法处理接口或者fetch。
+第一个参数可以接收任意值，也可以是rxjs的Observable,也可以是promise, 推荐使用rxjs的ajax方法处理接口或者fetch。为了将声明式数据源进行到底，在2.0里新增了一个类型Function，
+在某些场合比如需要路由中的某个参数，这个时候组件还没有加载没有办法获取这个参数，则可以使用此方法，meng会在高阶组件Lift加载完之后，把props传给你的函数
 第二个参数是当第一个参数成功注入的时候的回调，如果是字符串则表示作为变量注入到组件对应的Store里，如果是函数，则调用这个函数，并把组件对应的store和返回值传给函数
 第三个参数是第一个参数注入失败之后的回调，如果是字符串则表示作为变量注入到组件对应的Store里，如果是函数，则调用这个函数，并把组件对应的store和返回值传给函数
 
