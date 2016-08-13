@@ -109,7 +109,7 @@ function fork(currentStore, props, {source, success, fail = () => { } }) {
     return this.observers.push(observer)
   }
   if (source instanceof Function) {
-    return fork(currentStore, props, { source: source(props), success, fail })
+    return fork.call(this, currentStore, props, { source: source(props), success, fail })
   }
 
   typeof success === "string" ? currentStore.setState({ [success]: source }) : success(currentStore, source)
@@ -117,7 +117,7 @@ function fork(currentStore, props, {source, success, fail = () => { } }) {
 
 const errorHandle = (currentStore, fail, y) => typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
 
-type ResourceCB = (store: Store, any) => any
+export type ResourceCB = (store: Store, any) => any
 export const resource = (source: any, success: string | ResourceCB, fail?: string | ResourceCB) =>
   <T>(Component: any) => {
     Component.resource.push({ source, success, fail })

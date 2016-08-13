@@ -90,7 +90,7 @@ function fork(currentStore, props, _a) {
         return this.observers.push(observer);
     }
     if (source instanceof Function) {
-        return fork(currentStore, props, { source: source(props), success: success, fail: fail });
+        return fork.call(this, currentStore, props, { source: source(props), success: success, fail: fail });
     }
     typeof success === "string" ? currentStore.setState((_d = {}, _d[success] = source, _d)) : success(currentStore, source);
     var _c, _d;
