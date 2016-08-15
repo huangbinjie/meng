@@ -14,13 +14,14 @@
   import { ajax } from 'rxjs/observable/dom/ajax'
 
   //建议组件使用class写法，组件名字开头大写
+  @resource(props => ajax.get(`/test/${props.params.tid}`), "field3")
   @resource(ajax.get("/test"), "field2")
   @resource("test", "field1")
   @lift({todos: []})
   class App extends React.Component {
     state = Store["App"].state
     render() {
-      const { field1, field2, todos } = this.state
+      const { field1, field2, field3, todos } = this.state
       return <div>
         <Child data={todos}/>
       </div>
