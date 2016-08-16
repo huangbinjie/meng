@@ -1,8 +1,8 @@
 {
   "name": "meng",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "react unidirectional lib",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
