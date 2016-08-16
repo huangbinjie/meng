@@ -1,7 +1,7 @@
 import { Subject, Observable, Subscription } from 'rxjs'
 import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
-import shallowEqual from 'shallowequal'
+import shallowEqual from './utils/shallowEqual'
 
 const subject = new Subject()
 

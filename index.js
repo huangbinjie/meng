@@ -7,7 +7,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var rxjs_1 = require('rxjs');
 var AjaxObservable_1 = require('rxjs/observable/dom/AjaxObservable');
 var react_1 = require('react');
-var shallowequal_1 = require('shallowequal');
+var shallowEqual_1 = require('./utils/shallowEqual');
 var subject = new rxjs_1.Subject();
 var StoreConstructor = (function () {
     function StoreConstructor(state, subject, setState) {
@@ -46,7 +46,7 @@ exports.lift = function (initialState) {
                 });
             };
             LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
-                if (!shallowequal_1.default(nextProps, this.props)) {
+                if (!shallowEqual_1.default(nextProps, this.props)) {
                     this.haveOwnPropsChanged = true;
                     for (var _i = 0, _a = LiftedComponent.resource; _i < _a.length; _i++) {
                         var source = _a[_i];
