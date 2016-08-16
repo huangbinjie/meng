@@ -49,9 +49,9 @@ exports.lift = function (initialState) {
                 if (!shallowEqual_1.default(nextProps, this.props)) {
                     this.haveOwnPropsChanged = true;
                     for (var _i = 0, _a = LiftedComponent.resource; _i < _a.length; _i++) {
-                        var source = _a[_i];
-                        if (source instanceof Function) {
-                            fork.call(this, source);
+                        var obj = _a[_i];
+                        if (obj.source instanceof Function) {
+                            fork.call(this, Store[displayName], nextProps, obj);
                         }
                     }
                 }
