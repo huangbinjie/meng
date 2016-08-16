@@ -7,6 +7,7 @@ var __extends = (this && this.__extends) || function (d, b) {
 var rxjs_1 = require('rxjs');
 var AjaxObservable_1 = require('rxjs/observable/dom/AjaxObservable');
 var react_1 = require('react');
+var shallowequal_1 = require('shallowequal');
 var subject = new rxjs_1.Subject();
 var StoreConstructor = (function () {
     function StoreConstructor(state, subject, setState) {
@@ -37,10 +38,23 @@ exports.lift = function (initialState) {
             LiftedComponent.prototype.componentWillUnmount = function () {
                 Store[displayName] = null;
                 this._isMounted = false;
+                this.haveOwnPropsChanged = false;
+                this.hasStoreStateChanged = false;
                 this.observers.map(function (observer) {
                     observer.unsubscribe();
                     observer.remove(observer);
                 });
+            };
+            LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
+                if (!shallowequal_1.default(nextProps, this.props)) {
+                    this.haveOwnPropsChanged = true;
+                    for (var _i = 0, _a = LiftedComponent.resource; _i < _a.length; _i++) {
+                        var source = _a[_i];
+                        if (source instanceof Function) {
+                            fork.call(this, source);
+                        }
+                    }
+                }
             };
             LiftedComponent.prototype.componentWillMount = function () {
                 var _this = this;
@@ -52,6 +66,7 @@ exports.lift = function (initialState) {
                 Store[displayName] = currentStore;
                 var observer = currentStore["@@subject"].subscribe(function (sub) {
                     var storeState = Object.assign(currentStore.state, sub.state);
+                    _this.hasStoreStateChanged = true;
                     _this.setState(storeState, sub.callback);
                 });
                 this.observers.push(observer);
@@ -60,7 +75,12 @@ exports.lift = function (initialState) {
             LiftedComponent.prototype.componentDidMount = function () {
                 this._isMounted = true;
             };
+            LiftedComponent.prototype.shouldComponentUpdate = function () {
+                return this.haveOwnPropsChanged || this.hasStoreStateChanged;
+            };
             LiftedComponent.prototype.render = function () {
+                this.haveOwnPropsChanged = false;
+                this.hasStoreStateChanged = false;
                 var props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, Store[displayName].state, this.props);
                 return react_1.createElement(component, props);
             };

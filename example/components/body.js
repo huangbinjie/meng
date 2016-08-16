@@ -23,7 +23,6 @@ var Body = (function (_super) {
     }
     Body.prototype.render = function () {
         var _a = this.props, _b = _a.num, num = _b === void 0 ? 0 : _b, text = _a.text, data = _a.data, setState = _a.setState, userInfo = _a.userInfo, lazyProps = _a.lazyProps;
-        console.log(lazyProps);
         return (React.createElement("div", null, 
             React.createElement("button", {onClick: add(num, setState)}, "+"), 
             React.createElement("p", null, 
@@ -40,12 +39,6 @@ var Body = (function (_super) {
                 JSON.stringify(userInfo))));
     };
     Body = __decorate([
-        _1.resource(function (props) {
-            console.log(props);
-            return new Promise(function (resolve, reject) {
-                setTimeout(function () { return resolve(11111); }, 3000);
-            });
-        }, "lazyProps"),
         _1.resource(_1.default, "userInfo"),
         _1.lift(), 
         __metadata('design:paramtypes', [])

@@ -23,7 +23,6 @@ var Footer = (function (_super) {
     function Footer() {
         var _this = this;
         _super.apply(this, arguments);
-        this.state = _1.default["Footer"].state;
         this.add = function (num) { return function (e) {
             _this.setState({ num: ++num });
         }; };
@@ -35,7 +34,8 @@ var Footer = (function (_super) {
         }); };
     }
     Footer.prototype.render = function () {
-        var _a = this.state, num = _a.num, testResponse = _a.testResponse, _b = _a.text, text = _b === void 0 ? "test" : _b;
+        var _a = this.props, num = _a.num, testResponse = _a.testResponse, _b = _a.text, text = _b === void 0 ? "test" : _b, lazyProps = _a.lazyProps;
+        console.log(lazyProps);
         return (React.createElement("div", null, 
             React.createElement("button", {onClick: this.add(num)}, "+"), 
             React.createElement("p", null, 
@@ -47,6 +47,12 @@ var Footer = (function (_super) {
             React.createElement("p", null, JSON.stringify(testResponse))));
     };
     Footer = __decorate([
+        _1.resource(function (props) {
+            console.log(props);
+            return new Promise(function (resolve, reject) {
+                setTimeout(function () { return resolve(22222); }, 3000);
+            });
+        }, "lazyProps"),
         _1.resource(fetchData(), "testResponse", function (store, err) { return console.log(err); }),
         _1.lift({ num: 0 }), 
         __metadata('design:paramtypes', [])

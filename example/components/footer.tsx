@@ -16,12 +16,19 @@ type state = {
 const fetchData = () => new Promise((resolve, reject) => {
   setTimeout(() => resolve("服务器返回了一段测试数据"), 1000)
 })
+
+@resource(props => {
+  console.log(props);
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(22222), 3000)
+  })
+}, "lazyProps")
 @resource(fetchData(), "testResponse", (store, err) => console.log(err))
 @lift({ num: 0 })
 export default class Footer extends React.Component<any, Object> {
-  state = Store["Footer"].state
   render() {
-    const {num, testResponse, text = "test"} = this.state
+    const {num, testResponse, text = "test", lazyProps} = this.props
+    console.log(lazyProps)
     return (
       <div>
         <button onClick = { this.add(num) }>+</button>

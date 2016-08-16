@@ -10,5 +10,8 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "declaration": true
-  }
+  },
+  "exclude": [
+    "node_modules"
+  ]
 }

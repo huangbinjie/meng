@@ -1,6 +1,7 @@
 import { Subject, Observable, Subscription } from 'rxjs'
 import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
+import shallowEqual from 'shallowequal'
 
 const subject = new Subject()
 
@@ -51,16 +52,31 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
   return class LiftedComponent extends Component<any, Object> {
     static displayName = `Lifted(${displayName})`
     static resource = []
+    haveOwnPropsChanged: boolean
+    hasStoreStateChanged: boolean
     _isMounted = false
     observers: Subscription[] = [] //存放disposable
 
     componentWillUnmount() {
       Store[displayName] = null
       this._isMounted = false
+      this.haveOwnPropsChanged = false
+      this.hasStoreStateChanged = false
       this.observers.map(observer => {
         observer.unsubscribe()
         observer.remove(observer)
       })
+    }
+    componentWillReceiveProps(nextProps) {
+      if (!shallowEqual(nextProps, this.props)) {
+        this.haveOwnPropsChanged = true
+        //当参数更改了，这个特殊的数据源需要再次被调用
+        for (let source of LiftedComponent.resource) {
+          if (source instanceof Function) {
+            fork.call(this, source)
+          }
+        }
+      }
     }
     componentWillMount() {
       const currentStore = new StoreConstructor(Object.assign({}, initialState), new Subject(), function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
@@ -68,6 +84,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
       Store[displayName] = currentStore
       const observer = currentStore["@@subject"].subscribe((sub: Action) => {
         const storeState = Object.assign(currentStore.state, sub.state)
+        this.hasStoreStateChanged = true
         this.setState(storeState, sub.callback)
       })
 
@@ -79,7 +96,13 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
     componentDidMount() {
       this._isMounted = true
     }
+    shouldComponentUpdate() {
+      return this.haveOwnPropsChanged || this.hasStoreStateChanged
+    }
     render() {
+      this.haveOwnPropsChanged = false
+      this.hasStoreStateChanged = false
+
       const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, Store[displayName].state, this.props)
       return createElement(component, props)
     }
