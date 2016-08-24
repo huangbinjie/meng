@@ -2,6 +2,7 @@ import { Subject, Observable, Subscription } from 'rxjs'
 import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
 import shallowEqual from './utils/shallowEqual'
+import hashString from './utils/hash'
 
 const subject = new Subject()
 
@@ -48,7 +49,7 @@ type Action = {
 declare var LiftedComponent: ComponentClass<any>
 
 export const lift = (initialState = {}) => <P, S>(component: component<P, S> | Stateless<P>): any => {
-  const displayName = component.displayName || component.name
+  const displayName = component.displayName || component.name || Math.random().toString(32).substr(2)
   return class LiftedComponent extends Component<any, Object> {
     static displayName = `Lifted(${displayName})`
     static resource = []

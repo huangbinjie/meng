@@ -27,7 +27,7 @@ var Store = new StoreConstructor({}, subject, function (state, callback) {
 exports.lift = function (initialState) {
     if (initialState === void 0) { initialState = {}; }
     return function (component) {
-        var displayName = component.displayName || component.name;
+        var displayName = component.displayName || component.name || Math.random().toString(32).substr(2);
         return (function (_super) {
             __extends(LiftedComponent, _super);
             function LiftedComponent() {
