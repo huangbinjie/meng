@@ -119,7 +119,7 @@ function fork(currentStore, props, {source, success, fail = () => { } }) {
     )
     return this.observers.push(observer)
   }
-  if (source instanceof Promise) return source.then(
+  if (window["Promise"] && source instanceof Promise) return source.then(
     x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
     y => errorHandle(currentStore, fail, y)
   )
