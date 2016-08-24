@@ -102,7 +102,7 @@ function fork(currentStore, props, _a) {
         }, function (y) { return errorHandle(currentStore, fail, y); });
         return this.observers.push(observer);
     }
-    if (source instanceof Promise)
+    if (window["Promise"] && source instanceof Promise)
         return source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(currentStore, x); var _a; }, function (y) { return errorHandle(currentStore, fail, y); });
     if (source instanceof StoreConstructor) {
         typeof success === "string" ? currentStore.setState((_c = {}, _c[success] = source.state, _c)) : success(currentStore, source.state);
