@@ -73,7 +73,7 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
         this.haveOwnPropsChanged = true
         //当参数更改了，这个特殊的数据源需要再次被调用
         for (let obj of LiftedComponent.resource) {
-          if (obj.source instanceof Function || obj.source.length > 0) {
+          if (obj.source instanceof Function && obj.source.length > 0) {
             fork.call(this, Store[displayName], nextProps, obj)
           }
         }
