@@ -11,13 +11,17 @@
 
 ```js
   import Store, { lift, resource } from 'meng'
-  import { ajax } from 'rxjs/observable/dom/ajax'
-
-  //建议组件使用class写法，组件名字开头大写
-  @resource(props => ajax.get(`/test/${props.params.tid}`), "field3")
-  @resource(ajax.get("/test"), "field2")
+  //组件的store可以互相注入，这里把根store注入进来，你可以把全局变量，比如用户登录之后的信息存在这里 Store.setState({user: userinfo})
+  @resource(Store, "rootStore")
+  //注入一个thunk, 接收props作为参数，并返回一个promise，组件mounted会调用一次，组件props每次发生改变的时候都会调用一次
+  @resource(props => fetch(`/test/${props.params.tid}`), "field3")
+  //注入一个thunk，没有参数，并返回一个promise，组件mounted会调用一次
+  @resource(() => fetch("/test"), "field2")
+  //也可以给组件注入任意值
   @resource("test", "field1")
+  //初始化原生组件
   @lift({todos: []})
+  //建议组件使用class写法，组件名字开头大写
   class App extends React.Component {
     state = Store["App"].state
     render() {
@@ -50,9 +54,12 @@
 
 ### resource<T>(any|Observable|Promise|(props) => T , string|Function, [string|Function])
 
-给组件注入数据源，只能给已经lift的组件使用  
+给组件注入数据源，只能给已经lift的组件使用
 第一个参数可以接收任意值，也可以是rxjs的Observable,也可以是promise, 推荐使用rxjs的ajax方法处理接口或者fetch。为了将声明式数据源进行到底，在2.0里新增了一个类型Function，
-在某些场合比如需要路由中的某个参数，这个时候组件还没有加载没有办法获取这个参数，则可以使用此方法，meng会在高阶组件Lift加载完之后，把props传给你的函数  
+在某些场合比如需要路由中的某个参数，这个时候组件还没有加载没有办法获取这个参数，则可以使用此方法，meng会在高阶组件Lift加载完之后，把props传给你的函数
+> 当注入的thunk函数不接收参数的时候，这个函数只会在高阶组件willmounted调用一次
+> 当注入的thunk函数接收参数的时候，这个函数不仅会在高阶组件willmounted调用一次，还会在props每次发生改变的时候都会调用一次，注意lift初始化的变量叫state不是props
+
 第二个参数是当第一个参数成功注入的时候的回调，如果是字符串则表示作为变量注入到组件对应的Store里，如果是函数，则调用这个函数，并把组件对应的store和返回值传给函数  
 第三个参数是第一个参数注入失败之后的回调，如果是字符串则表示作为变量注入到组件对应的Store里，如果是函数，则调用这个函数，并把组件对应的store和返回值传给函数
 

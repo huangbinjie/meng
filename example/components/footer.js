@@ -10,11 +10,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
 var React = require('react');
 var _1 = require('../../');
+/**
+ * Footer extends React.Component<state, any>
+ */
 var fetchData = function () { return new Promise(function (resolve, reject) {
     setTimeout(function () { return resolve("服务器返回了一段测试数据"); }, 1000);
 }); };
@@ -48,17 +48,16 @@ var Footer = (function (_super) {
     };
     Footer = __decorate([
         _1.resource(function (props) {
+            console.log("props改变的时候都会调用");
             console.log(props);
             return new Promise(function (resolve, reject) {
                 setTimeout(function () { return resolve(22222); }, 3000);
             });
         }, "lazyProps"),
         _1.resource(fetchData(), "testResponse", function (store, err) { return console.log(err); }),
-        _1.lift({ num: 0 }), 
-        __metadata('design:paramtypes', [])
+        _1.lift({ num: 0 })
     ], Footer);
     return Footer;
 }(React.Component));
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = Footer;
-//# sourceMappingURL=footer.js.map
+exports.__esModule = true;
+exports["default"] = Footer;

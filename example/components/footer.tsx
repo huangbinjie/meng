@@ -18,6 +18,7 @@ const fetchData = () => new Promise((resolve, reject) => {
 })
 
 @resource(props => {
+  console.log("props改变的时候都会调用")
   console.log(props);
   return new Promise((resolve, reject) => {
     setTimeout(() => resolve(22222), 3000)

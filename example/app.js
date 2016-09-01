@@ -45,17 +45,18 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	/// <reference path="../../typings/tsd.d.ts" />
 	var React = __webpack_require__(1);
 	var ReactDOM = __webpack_require__(38);
 	var body_1 = __webpack_require__(168);
 	var footer_1 = __webpack_require__(452);
 	var App = function () {
 	    return React.createElement("div", null, 
-	        React.createElement(body_1.default, {data: 123}), 
-	        React.createElement(footer_1.default, null));
+	        React.createElement(body_1["default"], {data: 123}), 
+	        React.createElement(footer_1["default"], null));
 	};
 	ReactDOM.render(React.createElement(App, null), document.getElementById('root'));
-	//# sourceMappingURL=app.js.map
+
 
 /***/ },
 /* 1 */
@@ -20346,19 +20347,23 @@
 	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 	    return c > 3 && r && Object.defineProperty(target, key, r), r;
 	};
-	var __metadata = (this && this.__metadata) || function (k, v) {
-	    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-	};
 	var React = __webpack_require__(1);
 	var _1 = __webpack_require__(169);
+	// @resource(props => {
+	//   console.log(props);
+	//   return new Promise((resolve, reject) => {
+	//     setTimeout(() => resolve(11111), 3000)
+	//   })
+	// }, "lazyProps")
 	var Body = (function (_super) {
 	    __extends(Body, _super);
 	    function Body() {
 	        _super.apply(this, arguments);
-	        this.state = _1.default["Body"].state;
+	        this.state = _1["default"]["Body"].state;
 	    }
 	    Body.prototype.render = function () {
 	        var _a = this.props, _b = _a.num, num = _b === void 0 ? 0 : _b, text = _a.text, data = _a.data, setState = _a.setState, userInfo = _a.userInfo, lazyProps = _a.lazyProps;
+	        // console.log(lazyProps)
 	        return (React.createElement("div", null, 
 	            React.createElement("button", {onClick: add(num, setState)}, "+"), 
 	            React.createElement("p", null, 
@@ -20375,22 +20380,21 @@
 	                JSON.stringify(userInfo))));
 	    };
 	    Body = __decorate([
-	        _1.resource(_1.default, "userInfo"),
-	        _1.lift(), 
-	        __metadata('design:paramtypes', [])
+	        _1.resource(_1["default"], "userInfo"),
+	        _1.lift()
 	    ], Body);
 	    return Body;
 	}(React.Component));
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = Body;
+	exports.__esModule = true;
+	exports["default"] = Body;
 	var add = function (num, setState) { return function (e) {
-	    _1.default["Footer"].setState({ num: ++_1.default["Footer"].state.num });
+	    _1["default"]["Footer"].setState({ num: ++_1["default"]["Footer"].state.num });
 	}; };
-	var reduction = function (num, setState) { return function (e) { return _1.default["Footer"].setState({ num: --_1.default["Footer"].state.num }); }; };
+	var reduction = function (num, setState) { return function (e) { return _1["default"]["Footer"].setState({ num: --_1["default"]["Footer"].state.num }); }; };
 	var timeoutHandle = function (setState) { return function (e) { return new Promise(function (resolve, reject) {
 	    setTimeout(function () { return resolve("服务器返回了一段测试数据"); }, 1000);
 	}).then(function (response) { return setState({ text: response }); }); }; };
-	//# sourceMappingURL=body.js.map
+
 
 /***/ },
 /* 169 */
@@ -20425,7 +20429,7 @@
 	exports.lift = function (initialState) {
 	    if (initialState === void 0) { initialState = {}; }
 	    return function (component) {
-	        var displayName = component.displayName || component.name;
+	        var displayName = component.displayName || component.name || Math.random().toString(32).substr(2);
 	        return (function (_super) {
 	            __extends(LiftedComponent, _super);
 	            function LiftedComponent() {
@@ -20447,9 +20451,9 @@
 	                if (!shallowEqual_1.default(nextProps, this.props)) {
 	                    this.haveOwnPropsChanged = true;
 	                    for (var _i = 0, _a = LiftedComponent.resource; _i < _a.length; _i++) {
-	                        var source = _a[_i];
-	                        if (source instanceof Function) {
-	                            fork.call(this, source);
+	                        var obj = _a[_i];
+	                        if (obj.source instanceof Function || obj.source.length > 0) {
+	                            fork.call(this, Store[displayName], nextProps, obj);
 	                        }
 	                    }
 	                }
@@ -20500,7 +20504,7 @@
 	        }, function (y) { return errorHandle(currentStore, fail, y); });
 	        return this.observers.push(observer);
 	    }
-	    if (source instanceof Promise)
+	    if (window["Promise"] && source instanceof Promise)
 	        return source.then(function (x) { return typeof success === "string" ? currentStore.setState((_a = {}, _a[success] = x, _a)) : success(currentStore, x); var _a; }, function (y) { return errorHandle(currentStore, fail, y); });
 	    if (source instanceof StoreConstructor) {
 	        typeof success === "string" ? currentStore.setState((_c = {}, _c[success] = source.state, _c)) : success(currentStore, source.state);
@@ -35477,11 +35481,11 @@
 	    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 	    return c > 3 && r && Object.defineProperty(target, key, r), r;
 	};
-	var __metadata = (this && this.__metadata) || function (k, v) {
-	    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-	};
 	var React = __webpack_require__(1);
 	var _1 = __webpack_require__(169);
+	/**
+	 * Footer extends React.Component<state, any>
+	 */
 	var fetchData = function () { return new Promise(function (resolve, reject) {
 	    setTimeout(function () { return resolve("服务器返回了一段测试数据"); }, 1000);
 	}); };
@@ -35515,20 +35519,20 @@
 	    };
 	    Footer = __decorate([
 	        _1.resource(function (props) {
+	            console.log("props改变的时候都会调用");
 	            console.log(props);
 	            return new Promise(function (resolve, reject) {
 	                setTimeout(function () { return resolve(22222); }, 3000);
 	            });
 	        }, "lazyProps"),
 	        _1.resource(fetchData(), "testResponse", function (store, err) { return console.log(err); }),
-	        _1.lift({ num: 0 }), 
-	        __metadata('design:paramtypes', [])
+	        _1.lift({ num: 0 })
 	    ], Footer);
 	    return Footer;
 	}(React.Component));
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = Footer;
-	//# sourceMappingURL=footer.js.map
+	exports.__esModule = true;
+	exports["default"] = Footer;
+
 
 /***/ }
 /******/ ]);

@@ -50,7 +50,7 @@ exports.lift = function (initialState) {
                     this.haveOwnPropsChanged = true;
                     for (var _i = 0, _a = LiftedComponent.resource; _i < _a.length; _i++) {
                         var obj = _a[_i];
-                        if (obj.source instanceof Function) {
+                        if (obj.source instanceof Function || obj.source.length > 0) {
                             fork.call(this, Store[displayName], nextProps, obj);
                         }
                     }
