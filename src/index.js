@@ -67,7 +67,6 @@ exports.lift = function (initialState) {
                     this["@@subject"].next({ state: state, callback: callback });
                 });
                 component.prototype.setState = currentStore.setState.bind(currentStore);
-                component.prototype.subscribe = currentStore.subscribe;
                 Store[displayName] = currentStore;
                 var observer = currentStore["@@subject"].subscribe(function (sub) {
                     var storeState = Object.assign(currentStore.state, sub.state);

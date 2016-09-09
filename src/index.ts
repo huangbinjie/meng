@@ -86,7 +86,6 @@ export const lift = (initialState = {}) => <P, S>(component: component<P, S> | S
     componentWillMount() {
       const currentStore = new StoreConstructor(Object.assign({}, initialState), new Subject(), function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
       component.prototype.setState = currentStore.setState.bind(currentStore)
-      component.prototype.subscribe = currentStore.subscribe
       Store[displayName] = currentStore
       const observer = currentStore["@@subject"].subscribe((sub: Action) => {
         const storeState = Object.assign(currentStore.state, sub.state)

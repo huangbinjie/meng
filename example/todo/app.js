@@ -101,7 +101,7 @@
 	        this.show = function (display) { return function () { return _this.setState({ display: display }); }; };
 	    }
 	    App.prototype.componentDidMount = function () {
-	        this["subscribe"](function (state) {
+	        src_1.default["App"].subscribe(function (state) {
 	            localStorage.setItem("meng-todo", JSON.stringify(src_1.default["App"].state));
 	        });
 	    };
@@ -21616,7 +21616,6 @@
 	                    this["@@subject"].next({ state: state, callback: callback });
 	                });
 	                component.prototype.setState = currentStore.setState.bind(currentStore);
-	                component.prototype.subscribe = currentStore.subscribe;
 	                Store[displayName] = currentStore;
 	                var observer = currentStore["@@subject"].subscribe(function (sub) {
 	                    var storeState = Object.assign(currentStore.state, sub.state);

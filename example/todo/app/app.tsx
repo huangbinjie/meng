@@ -12,7 +12,7 @@ window["store"] = Store
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, any> {
   componentDidMount() {
-    this["subscribe"](state => {
+    Store["App"].subscribe(state => {
       localStorage.setItem("meng-todo", JSON.stringify(Store["App"].state))
     })
   }
