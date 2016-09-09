@@ -42,8 +42,6 @@
     clickHandle = e => this.setState({todo: "clicked"})
   }
 ```
-
-这里有个已经编译好的demo，直接双击example/index.html
 ## Api
 
 ### lift(initialState)
