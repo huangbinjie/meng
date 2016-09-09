@@ -55,7 +55,7 @@ var App = (function (_super) {
         this.show = function (display) { return function () { return _this.setState({ display: display }); }; };
     }
     App.prototype.componentDidMount = function () {
-        src_1.default["App"].subscribe(function (state) {
+        this["subscribe"](function (state) {
             localStorage.setItem("meng-todo", JSON.stringify(src_1.default["App"].state));
         });
     };
@@ -78,7 +78,7 @@ var App = (function (_super) {
                 React.createElement("ul", {className: "todo-list"}, lis)), 
             React.createElement("footer", {className: "footer"}, 
                 React.createElement("span", {className: "todo-count"}, 
-                    React.createElement("strong", null, "0"), 
+                    React.createElement("strong", null, this.props.list.filter(function (item) { return item.status === "active"; }).length), 
                     " item left"), 
                 React.createElement("ul", {className: "filters"}, 
                     React.createElement("li", null, 

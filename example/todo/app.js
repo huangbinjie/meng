@@ -101,7 +101,7 @@
 	        this.show = function (display) { return function () { return _this.setState({ display: display }); }; };
 	    }
 	    App.prototype.componentDidMount = function () {
-	        src_1.default["App"].subscribe(function (state) {
+	        this["subscribe"](function (state) {
 	            localStorage.setItem("meng-todo", JSON.stringify(src_1.default["App"].state));
 	        });
 	    };
@@ -124,7 +124,7 @@
 	                React.createElement("ul", {className: "todo-list"}, lis)), 
 	            React.createElement("footer", {className: "footer"}, 
 	                React.createElement("span", {className: "todo-count"}, 
-	                    React.createElement("strong", null, "0"), 
+	                    React.createElement("strong", null, this.props.list.filter(function (item) { return item.status === "active"; }).length), 
 	                    " item left"), 
 	                React.createElement("ul", {className: "filters"}, 
 	                    React.createElement("li", null, 
@@ -21616,6 +21616,7 @@
 	                    this["@@subject"].next({ state: state, callback: callback });
 	                });
 	                component.prototype.setState = currentStore.setState.bind(currentStore);
+	                component.prototype.subscribe = currentStore.subscribe;
 	                Store[displayName] = currentStore;
 	                var observer = currentStore["@@subject"].subscribe(function (sub) {
 	                    var storeState = Object.assign(currentStore.state, sub.state);

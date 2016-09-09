@@ -12,7 +12,7 @@ window["store"] = Store
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, any> {
   componentDidMount() {
-    Store["App"].subscribe(state => {
+    this["subscribe"](state => {
       localStorage.setItem("meng-todo", JSON.stringify(Store["App"].state))
     })
   }
@@ -38,7 +38,7 @@ class App extends React.Component<any, any> {
           </ul>
         </section>
         <footer className="footer">
-          <span className="todo-count"><strong>0</strong> item left</span>
+          <span className="todo-count"><strong>{this.props.list.filter(item => item.status === "active").length}</strong> item left</span>
           <ul className="filters">
             <li>
               <a className={display === "all" ? "selected" : ""} href="#/" onClick={this.show("all")}>All</a>
