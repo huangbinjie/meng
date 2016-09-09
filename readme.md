@@ -70,6 +70,7 @@
 + `state` 每个store的状态都存在这个容器里面
 + `@@subject` 每个store的事件触发器，它是rxjs的Subject，不懂的可以忽略
 + `setState` 改变当前store的方法，它和react的setState方法一样，甚至包括回调。
++ `subscribe` 订阅这个store，调用setState会触发这个函数,用法: `Store.App.subscribe(state => localStorage.setItem("cache": JSON.stringify(this.state)))`
 
 我改变了lifted组件的setState方法，所以如果你还在组件里`this.setState`，其实就相当于`Store.组件名.setState()`。那么你可能要说我如果要局部状态怎么办啊。
 局部状态其实不符合我的思路的，包括redux都推荐用store取代state，如果是封闭状态的组件，你完全可以不lift嘛，如果lifted还矫情什么，一家老小都存store就对了。
