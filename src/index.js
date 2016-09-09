@@ -129,4 +129,3 @@ exports.resource = function (source, success, fail) {
 exports.getStore = function () { return Store; };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Store;
-//# sourceMappingURL=index.js.map

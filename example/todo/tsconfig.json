@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "jsx": "react",
+    "module": "commonjs",
+    "target": "es5",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "preserveConstEnums": true
+  },
+  "exclude": [
+    "node_modules",
+    "example",
+    "src"
+  ]
+}

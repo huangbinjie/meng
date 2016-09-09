@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "dependencies": {
+    "meng": "^2.1.5",
+    "react": "^15.3.1",
+    "react-dom": "^15.3.1",
+    "todomvc-app-css": "^2.0.6",
+    "todomvc-common": "^1.0.2"
+  }
+}

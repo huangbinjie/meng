@@ -7,9 +7,10 @@ import hashString from './utils/hash'
 const subject = new Subject()
 
 export interface Store {
-  "state": Object,
+  state: Object,
   setState: Function
   "@@subject": Subject<Object>
+  subscribe(success: (state) => void, error?: (error: Error) => void, complete?: () => void)
 }
 
 /**
@@ -18,8 +19,11 @@ export interface Store {
  */
 export class StoreConstructor implements Store {
   public "@@subject": Subject<Object>
-  constructor(public state: Object, subject: Subject<Object>, public setState: Function) {
+  constructor(public state, subject: Subject<Object>, public setState) {
     this["@@subject"] = subject
+  }
+  public subscribe = (success, error, complete) => {
+    this["@@subject"].subscribe((sub: Action) => success(sub.state), error, complete)
   }
 }
 
@@ -141,7 +145,8 @@ function fork(currentStore, props, {source, success, fail = () => { } }) {
 
 const errorHandle = (currentStore, fail, y) => typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
 
-export type ResourceCB = (store: Store, any) => any
+export declare type ResourceCB = (store: Store, any) => void
+
 export const resource = (source: any, success: string | ResourceCB, fail?: string | ResourceCB) =>
   <T>(Component: any) => {
     Component.resource.push({ source, success, fail })
