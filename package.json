@@ -1,6 +1,6 @@
 {
   "name": "meng",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "react unidirectional lib",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
