@@ -80,3 +80,4 @@
 
 我的设计思路非常先进，基本是就是未来几年react架构的主要发展方向了。😂
 具体请参考我的博客[关于react的数据流新思路](https://github.com/useroriented/useroriented.github.io/blob/master/coral/think-of-react-data-flow.md)
+还有[我是怎么写react项目的](https://medium.com/@akira.binjie/%E6%88%91%E6%98%AF%E6%80%8E%E4%B9%88%E5%86%99%E4%B8%80%E4%B8%AAreact%E9%A1%B9%E7%9B%AE%E7%9A%84-e6b23f8c3569#.vr4sovx6t)
