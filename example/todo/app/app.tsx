@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { render } from 'react-dom'
 import Store, { lift, inject } from '../../../src'
-
+window["Store"] = Store
 import { getByCache } from './app.api'
 
 @inject(getByCache, (store, cache) => store.setState(cache))
@@ -107,4 +107,5 @@ const CompletedItem = ({index, data, toggle, destroy}) =>
         <input className="edit" defaultValue="Create a TodoMVC template" />
     </li>
 
+console.log(App)
 render(<App />, document.getElementById("app"))

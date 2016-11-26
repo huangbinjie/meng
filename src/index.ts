@@ -78,7 +78,7 @@ const rootStore = createProxy(new ImplStore())
 const inject = (source$: Inject, success: Success) =>
     <P, S>(component: Meng.Component<P> | Meng.Stateless<P>): any => {
         component.resource.push({ source$, success })
-        return Component
+        return component
     }
 
 const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
@@ -135,7 +135,7 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
             this.haveOwnPropsChanged = false
             this.hasStoreStateChanged = false
 
-            const props = Object.assign({}, (<Store<S>>rootStore[displayName]).getState(), this.props)
+            const props = Object.assign({}, this.state, this.props)
             return createElement(component as ComponentClass<P>, props)
         }
     }

@@ -13,17 +13,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var React = require('react');
-var react_dom_1 = require('react-dom');
-var src_1 = require('../../../src');
-var app_api_1 = require('./app.api');
-window["store"] = src_1.default;
+var React = require("react");
+var react_dom_1 = require("react-dom");
+var src_1 = require("../../../src");
+window["Store"] = src_1.default;
+var app_api_1 = require("./app.api");
 var App = (function (_super) {
     __extends(App, _super);
     function App() {
-        var _this = this;
-        _super.apply(this, arguments);
-        this.onkeydown = function (event) {
+        var _this = _super.apply(this, arguments) || this;
+        _this.onkeydown = function (event) {
             if (event.value === "")
                 return;
             if (event.keyCode === 13) {
@@ -33,7 +32,7 @@ var App = (function (_super) {
                 _this.setState({ list: list });
             }
         };
-        this.toggle = function (data, index) { return function (event) {
+        _this.toggle = function (data, index) { return function (event) {
             var items = _this.props.list.map(function (item, _index) {
                 if (_index === index && item.status === "active")
                     return { status: "completed", value: item.value };
@@ -43,20 +42,21 @@ var App = (function (_super) {
             });
             _this.setState({ list: items });
         }; };
-        this.destroy = function (index) { return function () {
+        _this.destroy = function (index) { return function () {
             var items = _this.props.list;
             items.splice(index, 1);
             _this.setState({ list: items });
         }; };
-        this.clearCompleted = function () {
+        _this.clearCompleted = function () {
             var items = _this.props.list.filter(function (item) { return item.status !== "completed"; });
             _this.setState({ list: items });
         };
-        this.show = function (display) { return function () { return _this.setState({ display: display }); }; };
+        _this.show = function (display) { return function () { return _this.setState({ display: display }); }; };
+        return _this;
     }
     App.prototype.componentDidMount = function () {
         src_1.default["App"].subscribe(function (state) {
-            localStorage.setItem("meng-todo", JSON.stringify(src_1.default["App"].state));
+            localStorage.setItem("meng-todo", JSON.stringify(state));
         });
     };
     App.prototype.render = function () {
@@ -64,41 +64,38 @@ var App = (function (_super) {
         var display = this.props.display;
         var lis = this.props.list.filter(filter(display)).map(function (li, index) {
             if (li.status === "active")
-                return React.createElement(ActiveItem, {key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy});
+                return React.createElement(ActiveItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
             if (li.status === "completed")
-                return React.createElement(CompletedItem, {key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy});
+                return React.createElement(CompletedItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
         });
-        return (React.createElement("section", {className: "todoapp"}, 
-            React.createElement("header", {className: "header"}, 
-                React.createElement("h1", null, "todos"), 
-                React.createElement("input", {className: "new-todo", onKeyDown: this.onkeydown, placeholder: "What needs to be done?", autoFocus: true})), 
-            React.createElement("section", {className: "main"}, 
-                React.createElement("input", {className: "toggle-all", type: "checkbox"}), 
-                React.createElement("label", {htmlFor: "toggle-all"}, "Mark all as complete"), 
-                React.createElement("ul", {className: "todo-list"}, lis)), 
-            React.createElement("footer", {className: "footer"}, 
-                React.createElement("span", {className: "todo-count"}, 
-                    React.createElement("strong", null, this.props.list.filter(function (item) { return item.status === "active"; }).length), 
-                    " item left"), 
-                React.createElement("ul", {className: "filters"}, 
-                    React.createElement("li", null, 
-                        React.createElement("a", {className: display === "all" ? "selected" : "", href: "#/", onClick: this.show("all")}, "All")
-                    ), 
-                    React.createElement("li", null, 
-                        React.createElement("a", {className: display === "active" ? "selected" : "", href: "#/active", onClick: this.show("active")}, "Active")
-                    ), 
-                    React.createElement("li", null, 
-                        React.createElement("a", {className: display === "completed" ? "selected" : "", href: "#/completed", onClick: this.show("completed")}, "Completed")
-                    )), 
-                React.createElement("button", {className: "clear-completed", onClick: this.clearCompleted}, "Clear completed"))));
+        return (React.createElement("section", { className: "todoapp" },
+            React.createElement("header", { className: "header" },
+                React.createElement("h1", null, "todos"),
+                React.createElement("input", { className: "new-todo", onKeyDown: this.onkeydown, placeholder: "What needs to be done?", autoFocus: true })),
+            React.createElement("section", { className: "main" },
+                React.createElement("input", { className: "toggle-all", type: "checkbox" }),
+                React.createElement("label", { htmlFor: "toggle-all" }, "Mark all as complete"),
+                React.createElement("ul", { className: "todo-list" }, lis)),
+            React.createElement("footer", { className: "footer" },
+                React.createElement("span", { className: "todo-count" },
+                    React.createElement("strong", null, this.props.list.filter(function (item) { return item.status === "active"; }).length),
+                    " item left"),
+                React.createElement("ul", { className: "filters" },
+                    React.createElement("li", null,
+                        React.createElement("a", { className: display === "all" ? "selected" : "", href: "#/", onClick: this.show("all") }, "All")),
+                    React.createElement("li", null,
+                        React.createElement("a", { className: display === "active" ? "selected" : "", href: "#/active", onClick: this.show("active") }, "Active")),
+                    React.createElement("li", null,
+                        React.createElement("a", { className: display === "completed" ? "selected" : "", href: "#/completed", onClick: this.show("completed") }, "Completed"))),
+                React.createElement("button", { className: "clear-completed", onClick: this.clearCompleted }, "Clear completed"))));
     };
-    App = __decorate([
-        src_1.resource(app_api_1.getByCache, function (store, cache) { return store.setState(cache); }),
-        src_1.lift({ list: [], display: "all" }), 
-        __metadata('design:paramtypes', [])
-    ], App);
     return App;
 }(React.Component));
+App = __decorate([
+    src_1.inject(app_api_1.getByCache, function (store, cache) { return store.setState(cache); }),
+    src_1.lift({ list: [], display: "all" }),
+    __metadata("design:paramtypes", [])
+], App);
 var filter = function (display) { return function (li) {
     if (display === "all")
         return true;
@@ -107,20 +104,21 @@ var filter = function (display) { return function (li) {
 }; };
 var ActiveItem = function (_a) {
     var index = _a.index, data = _a.data, toggle = _a.toggle, destroy = _a.destroy;
-    return React.createElement("li", null, 
-        React.createElement("div", {className: "view"}, 
-            React.createElement("input", {className: "toggle", type: "checkbox", onChange: toggle(data, index)}), 
-            React.createElement("label", null, data.value), 
-            React.createElement("button", {className: "destroy", onClick: destroy(index)})), 
-        React.createElement("input", {className: "edit", defaultValue: "Rule the web"}));
+    return React.createElement("li", null,
+        React.createElement("div", { className: "view" },
+            React.createElement("input", { className: "toggle", type: "checkbox", onChange: toggle(data, index) }),
+            React.createElement("label", null, data.value),
+            React.createElement("button", { className: "destroy", onClick: destroy(index) })),
+        React.createElement("input", { className: "edit", defaultValue: "Rule the web" }));
 };
 var CompletedItem = function (_a) {
     var index = _a.index, data = _a.data, toggle = _a.toggle, destroy = _a.destroy;
-    return React.createElement("li", {className: "completed"}, 
-        React.createElement("div", {className: "view"}, 
-            React.createElement("input", {className: "toggle", type: "checkbox", onChange: toggle(data, index), checked: true}), 
-            React.createElement("label", null, data.value), 
-            React.createElement("button", {className: "destroy", onClick: destroy(index)})), 
-        React.createElement("input", {className: "edit", defaultValue: "Create a TodoMVC template"}));
+    return React.createElement("li", { className: "completed" },
+        React.createElement("div", { className: "view" },
+            React.createElement("input", { className: "toggle", type: "checkbox", onChange: toggle(data, index), checked: true }),
+            React.createElement("label", null, data.value),
+            React.createElement("button", { className: "destroy", onClick: destroy(index) })),
+        React.createElement("input", { className: "edit", defaultValue: "Create a TodoMVC template" }));
 };
+console.log(App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("app"));
