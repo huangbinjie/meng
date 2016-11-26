@@ -1,19 +1,15 @@
-/// <reference path="../../../typings/tsd.d.ts"/>
-
 import * as React from 'react'
 import { render } from 'react-dom'
-import Store, { lift, resource } from '../../../src'
+import Store, { lift, inject } from '../../../src'
 
 import { getByCache } from './app.api'
 
-window["store"] = Store
-
-@resource(getByCache, (store, cache) => store.setState(cache))
+// @inject(getByCache, (store, cache) => store.setState(cache))
 @lift({ list: [], display: "all" })
-class App extends React.Component<any, any> {
+class App extends React.Component<void, void> {
   componentDidMount() {
     Store["App"].subscribe(state => {
-      localStorage.setItem("meng-todo", JSON.stringify(Store["App"].state))
+      localStorage.setItem("meng-todo", JSON.stringify(state))
     })
   }
   render() {

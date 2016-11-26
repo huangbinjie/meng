@@ -1,22 +1,28 @@
+/// <reference path="/usr/local/lib/node_modules/typescript/lib/lib.es6.d.ts" />
 import { ReplaySubject, Observable, Subscription } from 'rxjs'
 import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
-import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
+import { createElement, Component, ComponentClass, StatelessComponent, ComponentLifecycle } from 'react'
 import shallowEqual from './utils/shallowequal'
 
 export interface Store<S> {
-    childrens: [Store]
+    children: { [key: string]: Store<Object> }
     setState: Function,
-    getState: () => S
+    getState: () => Promise<S>
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
 }
 
 export namespace Meng {
-    /** dumb组件类型1 */
-    export interface Component<P> extends ComponentClass<P> | StatelessComponent < P > {
+    export interface Component<P> extends ComponentLifecycle<P, void> {
         displayName?: string
         name?: string
         resource?: [Resource],
         prototype: {}
+    }
+
+    export interface Stateless<P> extends StatelessComponent<P> {
+        displayName?: string
+        name?: string
+        resource?: [Resource]
     }
 }
 
@@ -41,7 +47,7 @@ export class ImplStore<S> implements Store<S> {
         .distinctUntilChanged(shallowEqual)
         .scan((currentState, nextState) => Object.assign(currentState, nextState), {}) as ReplaySubject<S>
 
-    public childrens = []
+    public children = {}
 
     public setState = (nextState: S, callback = () => { }) => {
         this.state.next(nextState)
@@ -56,30 +62,30 @@ export class ImplStore<S> implements Store<S> {
 
 }
 
-function createProxy<T>(target: T): T & ProxyProps {
-    // Implement proxy that provides foo and bar properties
+function createProxy<T>(target: Store<T>): Store<T> & { [key: string]: Store<Object> } {
+    return new Proxy<any>(target, {
+        get(target, name) {
+            if (name in target)
+                return target[name]
+            else
+                return target.children[name]
+        }
+    })
 }
 
-const rootStore = new Proxy(new ImplStore(), {
-    get(target, name) {
-        if (!name in target)
-            return target.childrens[name]
-        else
-            return target[name]
-    }
-})
+const rootStore = createProxy(new ImplStore())
 
 const inject = (source$: Inject, success: Success) =>
-    <P, S>(component: Meng.Component<P, S> | Meng.Stateless<P>): ComponentClass => {
+    <P, S>(component: Meng.Component<P> | Meng.Stateless<P>): ComponentClass<P> => {
         component.resource.push({ source$, success })
         return Component
     }
 
-const lift = <P>(initialState = <S>{}) => (component: Meng.Component<P>): ComponentClass => {
+const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
     const displayName = component.displayName || component.name || Math.random().toString(32).substr(2)
     return class LiftedComponent extends Component<P, S> {
         static displayName = `Meng(${displayName})`
-        static resource: [Resource]
+        static resource: Resource[] = []
         private haveOwnPropsChanged: boolean
         private hasStoreStateChanged: boolean
         private _isMounted = false
@@ -104,7 +110,7 @@ const lift = <P>(initialState = <S>{}) => (component: Meng.Component<P>): Compon
 
         componentWillMount() {
             const currentStore = new ImplStore(initialState)
-            component.prototype.setState = currentStore.setState.bind(currentStore)
+            component.prototype["setState"] = currentStore.setState.bind(currentStore)
             rootStore[displayName] = currentStore
             const observer = currentStore.subscribe((state: S) => {
                 this.hasStoreStateChanged = true
@@ -130,7 +136,7 @@ const lift = <P>(initialState = <S>{}) => (component: Meng.Component<P>): Compon
             this.hasStoreStateChanged = false
 
             const props = Object.assign({}, (<Store<S>>rootStore[displayName]).getState(), this.props)
-            return createElement(component, props)
+            return createElement(component as ComponentClass<P>, props)
         }
     }
     // return ConnectComponent
@@ -146,7 +152,7 @@ function fork<P, S>(currentStore: Store<S>, {source$, success}: Resource) {
         source$.then(successHandle(currentStore, success))
 
     else if (source$ instanceof ImplStore) {
-        const observer = source$.state.subscribe(successHandle(currentStore, success))
+        const observer = source$.subscribe(successHandle(currentStore, success))
         this.observers.push(observer)
     }
 
@@ -161,6 +167,6 @@ const successHandle = <S>(store: Store<S>, success: Success) => (primitiveValue:
     typeof success === "string" ? store.setState({ [success]: primitiveValue }) : success(store, primitiveValue)
 
 
-export { lift, inject, foo }
+export { lift, inject }
 
 export default rootStore

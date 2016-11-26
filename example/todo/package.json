@@ -1,6 +1,7 @@
 {
   "private": true,
   "dependencies": {
+    "@types/react-dom": "^0.14.19",
     "meng": "^2.1.5",
     "react": "^15.3.1",
     "react-dom": "^15.3.1",

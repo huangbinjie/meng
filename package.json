@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/huangbinjie/meng#readme",
   "dependencies": {
+    "@types/core-js": "^0.9.34",
+    "@types/react": "^0.14.50",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
     "rxjs": "^5.0.0-rc.4"

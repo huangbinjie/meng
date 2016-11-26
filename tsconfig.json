@@ -9,8 +9,10 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "sourceMap": true,
-    "declaration": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "types": [
+      "core-js"
+    ]
   },
   "exclude": [
     "node_modules",
