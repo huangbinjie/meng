@@ -36,7 +36,7 @@ export type Resource = { source$: Inject, success: Success }
 
 /**
  * ImplStore
- * all store must instanceof this class
+ * all store should instanceof this class
  */
 export class ImplStore<S> implements Store<S> {
     constructor(initialState = <S>{}) {
@@ -76,7 +76,7 @@ function createProxy<T>(target: Store<T>): Store<T> & { [key: string]: Store<Obj
 const rootStore = createProxy(new ImplStore())
 
 const inject = (source$: Inject, success: Success) =>
-    <P, S>(component: Meng.Component<P> | Meng.Stateless<P>): ComponentClass<P> => {
+    <P, S>(component: Meng.Component<P> | Meng.Stateless<P>): any => {
         component.resource.push({ source$, success })
         return Component
     }
@@ -111,7 +111,7 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
         componentWillMount() {
             const currentStore = new ImplStore(initialState)
             component.prototype["setState"] = currentStore.setState.bind(currentStore)
-            rootStore[displayName] = currentStore
+            rootStore.children[displayName] = currentStore
             const observer = currentStore.subscribe((state: S) => {
                 this.hasStoreStateChanged = true
                 this.setState(state)
