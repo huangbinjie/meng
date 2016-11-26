@@ -1,158 +1,166 @@
-import { Subject, Observable, Subscription } from 'rxjs'
+import { ReplaySubject, Observable, Subscription } from 'rxjs'
 import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
 import { createElement, Component, ComponentClass, StatelessComponent } from 'react'
-import shallowEqual from './utils/shallowEqual'
-import hashString from './utils/hash'
+import shallowEqual from './utils/shallowequal'
 
-const subject = new Subject()
-
-export interface Store {
-  state: Object,
-  setState: Function
-  "@@subject": Subject<Object>
-  subscribe(success: (state) => void, error?: (error: Error) => void, complete?: () => void)
+export interface Store<S> {
+    childrens: [Store]
+    setState: Function,
+    getState: () => S
+    subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
 }
+
+export namespace Meng {
+    /** dumb组件类型1 */
+    export interface Component<P> extends ComponentClass<P> | StatelessComponent < P > {
+        displayName?: string
+        name?: string
+        resource?: [Resource],
+        prototype: {}
+    }
+}
+
+export type Inject = Observable<any> | Promise<any> | Function | Object
+
+export type Success = (<S>(store: Store<S>, nextState: Object) => void) | string
+
+export type Fail = (<S>(store: Store<S>, nextState: Object) => void) | string
+
+export type Resource = { source$: Inject, success: Success }
 
 /**
- * StoreConstructor
+ * ImplStore
  * all store must instanceof this class
  */
-export class StoreConstructor implements Store {
-  public "@@subject": Subject<Object>
-  constructor(public state, subject: Subject<Object>, public setState) {
-    this["@@subject"] = subject
-  }
-  public subscribe = (success, error, complete) => {
-    this["@@subject"].subscribe((sub: Action) => success(sub.state), error, complete)
-  }
+export class ImplStore<S> implements Store<S> {
+    constructor(initialState = <S>{}) {
+        this.state.next(initialState)
+    }
+
+    private state = new ReplaySubject(1)
+        .distinctUntilChanged(shallowEqual)
+        .scan((currentState, nextState) => Object.assign(currentState, nextState), {}) as ReplaySubject<S>
+
+    public childrens = []
+
+    public setState = (nextState: S, callback = () => { }) => {
+        this.state.next(nextState)
+        callback()
+    }
+
+    public getState = () => this.state.toPromise()
+
+    public subscribe = (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => {
+        return this.state.subscribe(success, error, complete)
+    }
+
 }
 
-const Store = new StoreConstructor({}, subject, function (state: Object, callback = () => { }) {
-  Object.assign(this.state, state)
-  subject.next(state)
-  callback()
+function createProxy<T>(target: T): T & ProxyProps {
+    // Implement proxy that provides foo and bar properties
+}
+
+const rootStore = new Proxy(new ImplStore(), {
+    get(target, name) {
+        if (!name in target)
+            return target.childrens[name]
+        else
+            return target[name]
+    }
 })
 
-/** dumb组件类型1 */
-export interface component<P, S> extends ComponentClass<P> {
-  displayName?: string
-  name?: string
-  resource?: Object
-}
-/** dumb组件类型2 */
-export interface Stateless<P> extends StatelessComponent<P> {
-  name?: string
-}
-
-/** subject.next接收的类型 */
-type Action = {
-  state: {}
-  callback: () => any
-}
-
-declare var LiftedComponent: ComponentClass<any>
-
-export const lift = (initialState = {}) => <P, S>(component: component<P, S> | Stateless<P>): any => {
-  const displayName = component.displayName || component.name || Math.random().toString(32).substr(2)
-  return class LiftedComponent extends Component<any, Object> {
-    static displayName = `Lifted(${displayName})`
-    static resource = []
-    haveOwnPropsChanged: boolean
-    hasStoreStateChanged: boolean
-    _isMounted = false
-    observers: Subscription[] = [] //存放disposable
-
-    componentWillUnmount() {
-      Store[displayName] = null
-      this._isMounted = false
-      this.haveOwnPropsChanged = false
-      this.hasStoreStateChanged = false
-      this.observers.map(observer => {
-        observer.unsubscribe()
-        observer.remove(observer)
-      })
+const inject = (source$: Inject, success: Success) =>
+    <P, S>(component: Meng.Component<P, S> | Meng.Stateless<P>): ComponentClass => {
+        component.resource.push({ source$, success })
+        return Component
     }
-    componentWillReceiveProps(nextProps) {
-      if (!shallowEqual(nextProps, this.props)) {
-        this.haveOwnPropsChanged = true
-        //当参数更改了，这个特殊的数据源需要再次被调用
-        for (let obj of LiftedComponent.resource) {
-          if (obj.source instanceof Function && obj.source.length > 0) {
-            fork.call(this, Store[displayName], nextProps, obj)
-          }
+
+const lift = <P>(initialState = <S>{}) => (component: Meng.Component<P>): ComponentClass => {
+    const displayName = component.displayName || component.name || Math.random().toString(32).substr(2)
+    return class LiftedComponent extends Component<P, S> {
+        static displayName = `Meng(${displayName})`
+        static resource: [Resource]
+        private haveOwnPropsChanged: boolean
+        private hasStoreStateChanged: boolean
+        private _isMounted = false
+        private subscriptions: Subscription[] = [] //存放disposable
+
+        componentWillUnmount() {
+            rootStore[displayName] = null
+            this._isMounted = false
+            this.haveOwnPropsChanged = false
+            this.hasStoreStateChanged = false
+            this.subscriptions.map(subscription => {
+                subscription.unsubscribe()
+                subscription.remove(subscription)
+            })
         }
-      }
-    }
-    componentWillMount() {
-      const currentStore = new StoreConstructor(Object.assign({}, initialState), new Subject(), function (state: Object, callback = () => { }) { this["@@subject"].next({ state, callback }) })
-      component.prototype.setState = currentStore.setState.bind(currentStore)
-      Store[displayName] = currentStore
-      const observer = currentStore["@@subject"].subscribe((sub: Action) => {
-        const storeState = Object.assign(currentStore.state, sub.state)
-        this.hasStoreStateChanged = true
-        this.setState(storeState, sub.callback)
-      })
 
-      this.observers.push(observer)
+        componentWillReceiveProps(nextProps: P) {
+            if (!shallowEqual(nextProps, this.props)) {
+                this.haveOwnPropsChanged = true
+            }
+        }
 
-      LiftedComponent.resource.map(obj => fork.call(this, currentStore, this.props, obj))
+        componentWillMount() {
+            const currentStore = new ImplStore(initialState)
+            component.prototype.setState = currentStore.setState.bind(currentStore)
+            rootStore[displayName] = currentStore
+            const observer = currentStore.subscribe((state: S) => {
+                this.hasStoreStateChanged = true
+                this.setState(state)
+                LiftedComponent.resource
+                    .filter(source => source.source$ instanceof Function && source.source$.length > 0)
+                    .forEach(source => fork.call(this, rootStore[displayName], source))
+            })
 
-    }
-    componentDidMount() {
-      this._isMounted = true
-    }
-    shouldComponentUpdate() {
-      return this.haveOwnPropsChanged || this.hasStoreStateChanged
-    }
-    render() {
-      this.haveOwnPropsChanged = false
-      this.hasStoreStateChanged = false
+            this.subscriptions.push(observer)
 
-      const props = Object.assign({ setState: Store[displayName].setState.bind(Store[displayName]) }, Store[displayName].state, this.props)
-      return createElement(component, props)
+            LiftedComponent.resource.forEach(source => fork.call(this, currentStore, source))
+
+        }
+        componentDidMount() {
+            this._isMounted = true
+        }
+        shouldComponentUpdate() {
+            return this.haveOwnPropsChanged || this.hasStoreStateChanged
+        }
+        render() {
+            this.haveOwnPropsChanged = false
+            this.hasStoreStateChanged = false
+
+            const props = Object.assign({}, (<Store<S>>rootStore[displayName]).getState(), this.props)
+            return createElement(component, props)
+        }
     }
-  }
-  // return ConnectComponent
+    // return ConnectComponent
 }
 
-function fork(currentStore, props, {source, success, fail = () => { } }) {
-  if (source instanceof Observable) {
-    const observer = source.subscribe(x => {
-      if (x instanceof AjaxObservable) typeof success === "string" ? currentStore.setState({ [success]: x.response }) : success(currentStore, x.response)
-      else typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x)
-    }, y => errorHandle(currentStore, fail, y)
-    )
-    return this.observers.push(observer)
-  }
-  if (window["Promise"] && source instanceof Promise) return source.then(
-    x => typeof success === "string" ? currentStore.setState({ [success]: x }) : success(currentStore, x),
-    y => errorHandle(currentStore, fail, y)
-  )
-  if (source instanceof StoreConstructor) {
-    typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, source.state)
-    const observer = source["@@subject"].subscribe(
-      x => typeof success === "string" ? currentStore.setState({ [success]: source.state }) : success(currentStore, x),
-      y => errorHandle(currentStore, fail, y)
-    )
-    return this.observers.push(observer)
-  }
-  if (source instanceof Function) {
-    return fork.call(this, currentStore, props, { source: source(props), success, fail })
-  }
+function fork<P, S>(currentStore: Store<S>, {source$, success}: Resource) {
+    if (source$ instanceof Observable) {
+        const observer = source$.subscribe(successHandle(currentStore, success))
+        this.observers.push(observer)
+    }
 
-  typeof success === "string" ? currentStore.setState({ [success]: source }) : success(currentStore, source)
+    else if (source$ instanceof Promise)
+        source$.then(successHandle(currentStore, success))
+
+    else if (source$ instanceof ImplStore) {
+        const observer = source$.state.subscribe(successHandle(currentStore, success))
+        this.observers.push(observer)
+    }
+
+    else if (source$ instanceof Function)
+        fork.call(this, currentStore, { source$: source$(currentStore.getState()), success })
+
+    else
+        successHandle(currentStore, success)(source$)
 }
 
-const errorHandle = (currentStore, fail, y) => typeof fail === "string" ? currentStore.setState({ [fail]: y }) : fail(currentStore, y)
+const successHandle = <S>(store: Store<S>, success: Success) => (primitiveValue: Object) =>
+    typeof success === "string" ? store.setState({ [success]: primitiveValue }) : success(store, primitiveValue)
 
-export declare type ResourceCB = (store: Store, any) => void
 
-export const resource = (source: any, success: string | ResourceCB, fail?: string | ResourceCB) =>
-  <T>(Component: any) => {
-    Component.resource.push({ source, success, fail })
-    return Component
-  }
+export { lift, inject, foo }
 
-export const getStore = () => Store
-
-export default Store
+export default rootStore
