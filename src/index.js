@@ -17,6 +17,7 @@ var ImplStore = (function () {
         this.children = {};
         this.setState = function (nextState, callback) {
             if (callback === void 0) { callback = function () { }; }
+            console.log(nextState);
             _this.state.next(nextState);
             callback();
         };

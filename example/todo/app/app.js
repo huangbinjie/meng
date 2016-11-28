@@ -17,7 +17,6 @@ var React = require("react");
 var react_dom_1 = require("react-dom");
 var src_1 = require("../../../src");
 window["Store"] = src_1.default;
-var app_api_1 = require("./app.api");
 var App = (function (_super) {
     __extends(App, _super);
     function App() {
@@ -26,10 +25,9 @@ var App = (function (_super) {
             if (event.value === "")
                 return;
             if (event.keyCode === 13) {
-                var list = _this.props.list;
-                list.push({ status: "active", value: event.target.value });
-                event.target.value = "";
-                _this.setState({ list: list });
+                var lls = JSON.parse(JSON.stringify(_this.props.list));
+                lls.push({ status: "active", value: event.target.value });
+                src_1.default["App"].setState({ list: lls });
             }
         };
         _this.toggle = function (data, index) { return function (event) {
@@ -92,7 +90,6 @@ var App = (function (_super) {
     return App;
 }(React.Component));
 App = __decorate([
-    src_1.inject(app_api_1.getByCache, function (store, cache) { return store.setState(cache); }),
     src_1.lift({ list: [], display: "all" }),
     __metadata("design:paramtypes", [])
 ], App);
@@ -120,5 +117,4 @@ var CompletedItem = function (_a) {
             React.createElement("button", { className: "destroy", onClick: destroy(index) })),
         React.createElement("input", { className: "edit", defaultValue: "Create a TodoMVC template" }));
 };
-console.log(App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("app"));

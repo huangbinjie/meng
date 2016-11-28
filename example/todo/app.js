@@ -63,7 +63,6 @@
 	var react_dom_1 = __webpack_require__(32);
 	var src_1 = __webpack_require__(178);
 	window["Store"] = src_1.default;
-	var app_api_1 = __webpack_require__(557);
 	var App = (function (_super) {
 	    __extends(App, _super);
 	    function App() {
@@ -72,10 +71,9 @@
 	            if (event.value === "")
 	                return;
 	            if (event.keyCode === 13) {
-	                var list = _this.props.list;
-	                list.push({ status: "active", value: event.target.value });
-	                event.target.value = "";
-	                _this.setState({ list: list });
+	                var lls = JSON.parse(JSON.stringify(_this.props.list));
+	                lls.push({ status: "active", value: event.target.value });
+	                src_1.default["App"].setState({ list: lls });
 	            }
 	        };
 	        _this.toggle = function (data, index) { return function (event) {
@@ -138,7 +136,6 @@
 	    return App;
 	}(React.Component));
 	App = __decorate([
-	    src_1.inject(app_api_1.getByCache, function (store, cache) { return store.setState(cache); }),
 	    src_1.lift({ list: [], display: "all" }),
 	    __metadata("design:paramtypes", [])
 	], App);
@@ -166,7 +163,6 @@
 	            React.createElement("button", { className: "destroy", onClick: destroy(index) })),
 	        React.createElement("input", { className: "edit", defaultValue: "Create a TodoMVC template" }));
 	};
-	console.log(App);
 	react_dom_1.render(React.createElement(App, null), document.getElementById("app"));
 
 
@@ -21600,6 +21596,7 @@
 	        this.children = {};
 	        this.setState = function (nextState, callback) {
 	            if (callback === void 0) { callback = function () { }; }
+	            console.log(nextState);
 	            _this.state.next(nextState);
 	            callback();
 	        };
@@ -43878,6 +43875,9 @@
 	    if (objA === objB) {
 	        return true;
 	    }
+	    if (objA == void 0 || objB == void 0) {
+	        return false;
+	    }
 	    var keysA = Object.keys(objA);
 	    var keysB = Object.keys(objB);
 	    if (keysA.length !== keysB.length) {
@@ -43894,14 +43894,6 @@
 	}
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = shallowEqual;
-
-
-/***/ },
-/* 557 */
-/***/ function(module, exports) {
-
-	"use strict";
-	exports.getByCache = function () { return new Promise(function (resolve, reject) { return resolve(JSON.parse(localStorage.getItem("meng-todo"))); }); };
 
 
 /***/ }

@@ -4,7 +4,7 @@ import Store, { lift, inject } from '../../../src'
 window["Store"] = Store
 import { getByCache } from './app.api'
 
-@inject(getByCache, (store, cache) => store.setState(cache))
+// @inject(getByCache, (store, cache) => store.setState(cache))
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, any> {
     componentDidMount() {
@@ -55,10 +55,10 @@ class App extends React.Component<any, any> {
         if (event.value === "") return
 
         if (event.keyCode === 13) {
-            const list = this.props.list
-            list.push({ status: "active", value: event.target.value })
-            event.target.value = ""
-            this.setState({ list: list })
+            const lls = JSON.parse(JSON.stringify(this.props.list))
+            lls.push({ status: "active", value: event.target.value})
+            // event.target.value = ""
+            Store["App"].setState({ list: lls })
         }
     }
     toggle = (data, index) => event => {
@@ -107,5 +107,5 @@ const CompletedItem = ({index, data, toggle, destroy}) =>
         <input className="edit" defaultValue="Create a TodoMVC template" />
     </li>
 
-console.log(App)
+
 render(<App />, document.getElementById("app"))

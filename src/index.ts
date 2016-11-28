@@ -7,7 +7,6 @@ import shallowEqual from './utils/shallowequal'
 export interface Store<S> {
     children: { [key: string]: Store<Object> }
     setState: Function,
-    getState: () => Promise<S>
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
 }
 
@@ -53,8 +52,6 @@ export class ImplStore<S> implements Store<S> {
         this.state.next(nextState)
         callback()
     }
-
-    public getState = () => this.state.toPromise()
 
     public subscribe = (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => {
         return this.state.subscribe(success, error, complete)
