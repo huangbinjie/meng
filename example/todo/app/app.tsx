@@ -4,7 +4,7 @@ import Store, { lift, inject } from '../../../src'
 window["Store"] = Store
 import { getByCache } from './app.api'
 
-// @inject(getByCache, (store, cache) => store.setState(cache))
+@inject(getByCache)
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, any> {
     componentDidMount() {
@@ -55,8 +55,8 @@ class App extends React.Component<any, any> {
         if (event.value === "") return
 
         if (event.keyCode === 13) {
-            const lls = JSON.parse(JSON.stringify(this.props.list))
-            lls.push({ status: "active", value: event.target.value})
+            const lls = [...this.props.list]
+            lls.push({ status: "active", value: event.target.value })
             // event.target.value = ""
             Store["App"].setState({ list: lls })
         }
@@ -71,7 +71,7 @@ class App extends React.Component<any, any> {
         this.setState({ list: items })
     }
     destroy = index => () => {
-        const items = this.props.list
+        const items = [...this.props.list]
         items.splice(index, 1)
         this.setState({ list: items })
     }

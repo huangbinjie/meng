@@ -11,21 +11,18 @@ var ImplStore = (function () {
     function ImplStore(initialState) {
         if (initialState === void 0) { initialState = {}; }
         var _this = this;
-        this.state = new rxjs_1.ReplaySubject(1)
+        this.state$ = new rxjs_1.ReplaySubject(1)
             .distinctUntilChanged(shallowequal_1.default)
             .scan(function (currentState, nextState) { return Object.assign(currentState, nextState); }, {});
         this.children = {};
         this.setState = function (nextState, callback) {
             if (callback === void 0) { callback = function () { }; }
-            console.log(nextState);
-            _this.state.next(nextState);
-            callback();
+            _this.state$.do(callback).next(nextState);
         };
-        this.getState = function () { return _this.state.toPromise(); };
         this.subscribe = function (success, error, complete) {
-            return _this.state.subscribe(success, error, complete);
+            return _this.state$.subscribe(success, error, complete);
         };
-        this.state.next(initialState);
+        this.state$.next(initialState);
     }
     return ImplStore;
 }());
@@ -57,7 +54,6 @@ var lift = function (initialState) {
                 function LiftedComponent() {
                     var _this = _super.apply(this, arguments) || this;
                     _this._isMounted = false;
-                    _this.subscriptions = [];
                     return _this;
                 }
                 LiftedComponent.prototype.componentWillUnmount = function () {
@@ -65,41 +61,34 @@ var lift = function (initialState) {
                     this._isMounted = false;
                     this.haveOwnPropsChanged = false;
                     this.hasStoreStateChanged = false;
-                    this.subscriptions.map(function (subscription) {
-                        subscription.unsubscribe();
-                        subscription.remove(subscription);
-                    });
+                    this.subscription.unsubscribe();
                 };
                 LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
-                    if (!shallowequal_1.default(nextProps, this.props)) {
-                        this.haveOwnPropsChanged = true;
-                    }
+                    rootStore[displayName].setState(nextProps);
                 };
                 LiftedComponent.prototype.componentWillMount = function () {
                     var _this = this;
                     var currentStore = new ImplStore(initialState);
                     component.prototype["setState"] = currentStore.setState.bind(currentStore);
                     rootStore.children[displayName] = currentStore;
-                    var observer = currentStore.subscribe(function (state) {
+                    currentStore.main$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props));
+                    LiftedComponent.resource.forEach(function (source) { return currentStore.main$ = fork.call(_this, currentStore.main$, source); });
+                    this.subscription = currentStore.main$
+                        .map(function (states) { return states.reduce(function (acc, nextState) { return Object.assign(acc, nextState); }, {}); })
+                        .subscribe(function (state) {
                         _this.hasStoreStateChanged = true;
                         _this.setState(state);
-                        LiftedComponent.resource
-                            .filter(function (source) { return source.source$ instanceof Function && source.source$.length > 0; })
-                            .forEach(function (source) { return fork.call(_this, rootStore[displayName], source); });
                     });
-                    this.subscriptions.push(observer);
-                    LiftedComponent.resource.forEach(function (source) { return fork.call(_this, currentStore, source); });
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
                     this._isMounted = true;
                 };
                 LiftedComponent.prototype.shouldComponentUpdate = function () {
-                    return this.haveOwnPropsChanged || this.hasStoreStateChanged;
+                    return this.hasStoreStateChanged;
                 };
                 LiftedComponent.prototype.render = function () {
-                    this.haveOwnPropsChanged = false;
                     this.hasStoreStateChanged = false;
-                    var props = Object.assign({}, this.state, this.props);
+                    var props = Object.assign({}, this.state);
                     return react_1.createElement(component, props);
                 };
                 return LiftedComponent;
@@ -111,26 +100,30 @@ var lift = function (initialState) {
     };
 };
 exports.lift = lift;
-function fork(currentStore, _a) {
+function fork(main$, _a) {
     var source$ = _a.source$, success = _a.success;
-    if (source$ instanceof rxjs_1.Observable) {
-        var observer = source$.subscribe(successHandle(currentStore, success));
-        this.observers.push(observer);
-    }
+    if (source$ instanceof rxjs_1.Observable)
+        return main$.combineLatest(source$.map(function (source) {
+            return success ? (_a = {}, _a[success] = source, _a) : source;
+            var _a;
+        }));
     else if (source$ instanceof Promise)
-        source$.then(successHandle(currentStore, success));
-    else if (source$ instanceof ImplStore) {
-        var observer = source$.subscribe(successHandle(currentStore, success));
-        this.observers.push(observer);
-    }
-    else if (source$ instanceof Function)
-        fork.call(this, currentStore, { source$: source$(currentStore.getState()), success: success });
+        return main$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(function (source) {
+            return success ? (_a = {}, _a[success] = source, _a) : source;
+            var _a;
+        }));
+    else if (source$ instanceof ImplStore)
+        return main$.combineLatest(source$.state$.map(function (source) {
+            return success ? (_a = {}, _a[success] = source, _a) : source;
+            var _a;
+        }));
+    else if (source$ instanceof Function && source$.length > 0)
+        return main$.concatMap(function (state) { return fork(main$, { source$: source$(state), success: success }); });
+    else if (source$ instanceof Function && source$.length === 0)
+        return fork(main$, { source$: source$(), success: success });
     else
-        successHandle(currentStore, success)(source$);
+        return main$.combineLatest(rxjs_1.Observable.of(success ? (_b = {}, _b[success] = source$, _b) : source$));
+    var _b;
 }
-var successHandle = function (store, success) { return function (primitiveValue) {
-    return typeof success === "string" ? store.setState((_a = {}, _a[success] = primitiveValue, _a)) : success(store, primitiveValue);
-    var _a;
-}; };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = rootStore;
