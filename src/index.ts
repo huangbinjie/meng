@@ -1,6 +1,5 @@
 /// <reference path="/usr/local/lib/node_modules/typescript/lib/lib.es6.d.ts" />
 import { ReplaySubject, Observable, Subscription } from 'rxjs'
-import { AjaxResponse, AjaxObservable } from 'rxjs/observable/dom/AjaxObservable'
 import { createElement, Component, ComponentClass, StatelessComponent, ComponentLifecycle } from 'react'
 import shallowEqual from './utils/shallowequal'
 
@@ -80,12 +79,11 @@ const inject = (source$: Inject, success?: Success) =>
     return component
   }
 
-const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
-  const displayName = component.displayName || component.name || Math.random().toString(32).substr(2)
+const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
+  const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
   return class LiftedComponent extends Component<P, S> {
     static displayName = `Meng(${displayName})`
     static resource: Resource[] = []
-    private haveOwnPropsChanged: boolean
     private hasStoreStateChanged: boolean
     private _isMounted = false
     private main$: Observable<S>
@@ -94,7 +92,6 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
     componentWillUnmount() {
       rootStore[displayName] = null
       this._isMounted = false
-      this.haveOwnPropsChanged = false
       this.hasStoreStateChanged = false
       this.subscription.unsubscribe()
       rootStore[displayName].subscription.unsubscribe()
