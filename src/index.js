@@ -92,7 +92,7 @@ function fork(main$, { source$, success }) {
     else if (source$ instanceof ImplStore)
         return main$.combineLatest(source$.state$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
     else if (source$ instanceof Function && source$.length > 0)
-        return main$.concatMap(state => fork(main$, { source$: source$(state), success }).map(api => Object.assign(state, api)));
+        return main$.flatMap(state => fork(main$, { source$: source$(state), success }).map(api => Object.assign(state, api)));
     else if (source$ instanceof Function && source$.length === 0)
         return fork(main$, { source$: source$(), success });
     else
