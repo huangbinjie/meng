@@ -28,6 +28,7 @@ var App = (function (_super) {
             if (event.keyCode === 13) {
                 var lls = _this.props.list.slice();
                 lls.push({ status: "active", value: event.target.value });
+                event.target.value = "";
                 src_1.default["App"].setState({ list: lls });
             }
         };
@@ -55,12 +56,14 @@ var App = (function (_super) {
     }
     App.prototype.componentDidMount = function () {
         src_1.default["App"].subscribe(function (state) {
+            console.log(state);
             localStorage.setItem("meng-todo", JSON.stringify(state));
         });
     };
     App.prototype.render = function () {
         var _this = this;
         var display = this.props.display;
+        console.log(111);
         var lis = this.props.list.filter(filter(display)).map(function (li, index) {
             if (li.status === "active")
                 return React.createElement(ActiveItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
@@ -91,7 +94,7 @@ var App = (function (_super) {
     return App;
 }(React.Component));
 App = __decorate([
-    src_1.inject(app_api_1.getByCache),
+    src_1.inject(app_api_1.getByCache, function (cache) { return cache; }),
     src_1.lift({ list: [], display: "all" }),
     __metadata("design:paramtypes", [])
 ], App);

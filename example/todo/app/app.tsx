@@ -4,17 +4,18 @@ import Store, { lift, inject } from '../../../src'
 window["Store"] = Store
 import { getByCache } from './app.api'
 
-@inject(getByCache)
+@inject(getByCache, cache => cache)
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, any> {
     componentDidMount() {
         Store["App"].subscribe(state => {
+            console.log(state)
             localStorage.setItem("meng-todo", JSON.stringify(state))
         })
     }
     render() {
         const display = this.props.display
-
+        console.log(111)
         const lis = this.props.list.filter(filter(display)).map((li, index) => {
             if (li.status === "active") return <ActiveItem key={index} index={index} data={li} toggle={this.toggle} destroy={this.destroy} />
             if (li.status === "completed") return <CompletedItem key={index} index={index} data={li} toggle={this.toggle} destroy={this.destroy} />
@@ -57,7 +58,7 @@ class App extends React.Component<any, any> {
         if (event.keyCode === 13) {
             const lls = [...this.props.list]
             lls.push({ status: "active", value: event.target.value })
-            // event.target.value = ""
+            event.target.value = ""
             Store["App"].setState({ list: lls })
         }
     }

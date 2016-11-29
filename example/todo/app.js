@@ -74,6 +74,7 @@
 	            if (event.keyCode === 13) {
 	                var lls = _this.props.list.slice();
 	                lls.push({ status: "active", value: event.target.value });
+	                event.target.value = "";
 	                src_1.default["App"].setState({ list: lls });
 	            }
 	        };
@@ -101,12 +102,14 @@
 	    }
 	    App.prototype.componentDidMount = function () {
 	        src_1.default["App"].subscribe(function (state) {
+	            console.log(state);
 	            localStorage.setItem("meng-todo", JSON.stringify(state));
 	        });
 	    };
 	    App.prototype.render = function () {
 	        var _this = this;
 	        var display = this.props.display;
+	        console.log(111);
 	        var lis = this.props.list.filter(filter(display)).map(function (li, index) {
 	            if (li.status === "active")
 	                return React.createElement(ActiveItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
@@ -137,7 +140,7 @@
 	    return App;
 	}(React.Component));
 	App = __decorate([
-	    src_1.inject(app_api_1.getByCache),
+	    src_1.inject(app_api_1.getByCache, function (cache) { return cache; }),
 	    src_1.lift({ list: [], display: "all" }),
 	    __metadata("design:paramtypes", [])
 	], App);
@@ -21597,8 +21600,9 @@
 	            .scan(function (currentState, nextState) { return Object.assign(currentState, nextState); }, {});
 	        this.children = {};
 	        this.setState = function (nextState, callback) {
-	            if (callback === void 0) { callback = function () { }; }
-	            _this.state$.do(callback).next(nextState);
+	            if (callback === void 0) { callback = function (state) { }; }
+	            _this.state$.next(nextState);
+	            _this.state$.subscribe(callback).unsubscribe();
 	        };
 	        this.subscribe = function (success, error, complete) {
 	            return _this.state$.subscribe(success, error, complete);
@@ -21643,6 +21647,7 @@
 	                    this.haveOwnPropsChanged = false;
 	                    this.hasStoreStateChanged = false;
 	                    this.subscription.unsubscribe();
+	                    rootStore[displayName].subscription.unsubscribe();
 	                };
 	                LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
 	                    rootStore[displayName].setState(nextProps);
@@ -21652,11 +21657,11 @@
 	                    var currentStore = new ImplStore(initialState);
 	                    component.prototype["setState"] = currentStore.setState.bind(currentStore);
 	                    rootStore.children[displayName] = currentStore;
-	                    currentStore.main$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props));
-	                    LiftedComponent.resource.forEach(function (source) { return currentStore.main$ = fork.call(_this, currentStore.main$, source); });
-	                    this.subscription = currentStore.main$
-	                        .map(function (states) { return states.reduce(function (acc, nextState) { return Object.assign(acc, nextState); }, {}); })
-	                        .subscribe(function (state) {
+	                    this.main$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props), combineLatestSelector);
+	                    LiftedComponent.resource.forEach(function (source) { return _this.main$ = fork.call(_this, _this.main$, source); });
+	                    this.subscription = this.main$
+	                        .subscribe(currentStore.setState);
+	                    currentStore.subscription = currentStore.state$.subscribe(function (state) {
 	                        _this.hasStoreStateChanged = true;
 	                        _this.setState(state);
 	                    });
@@ -21669,7 +21674,7 @@
 	                };
 	                LiftedComponent.prototype.render = function () {
 	                    this.hasStoreStateChanged = false;
-	                    var props = Object.assign({}, this.state);
+	                    var props = Object.assign({}, initialState, this.state);
 	                    return react_1.createElement(component, props);
 	                };
 	                return LiftedComponent;
@@ -21685,27 +21690,28 @@
 	    var source$ = _a.source$, success = _a.success;
 	    if (source$ instanceof rxjs_1.Observable)
 	        return main$.combineLatest(source$.map(function (source) {
-	            return success ? (_a = {}, _a[success] = source, _a) : source;
+	            return typeof success === "string" ? (_a = {}, _a[success] = source, _a) : success(source);
 	            var _a;
-	        }));
+	        }), combineLatestSelector);
 	    else if (source$ instanceof Promise)
 	        return main$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(function (source) {
-	            return success ? (_a = {}, _a[success] = source, _a) : source;
+	            return typeof success === "string" ? (_a = {}, _a[success] = source, _a) : success(source);
 	            var _a;
-	        }));
+	        }), combineLatestSelector);
 	    else if (source$ instanceof ImplStore)
 	        return main$.combineLatest(source$.state$.map(function (source) {
-	            return success ? (_a = {}, _a[success] = source, _a) : source;
+	            return typeof success === "string" ? (_a = {}, _a[success] = source, _a) : success(source);
 	            var _a;
-	        }));
+	        }), combineLatestSelector);
 	    else if (source$ instanceof Function && source$.length > 0)
-	        return main$.concatMap(function (state) { return fork(main$, { source$: source$(state), success: success }); });
+	        return main$.concatMap(function (state) { return fork(main$, { source$: source$(state), success: success }).map(function (api) { return Object.assign(state, api); }); });
 	    else if (source$ instanceof Function && source$.length === 0)
 	        return fork(main$, { source$: source$(), success: success });
 	    else
-	        return main$.combineLatest(rxjs_1.Observable.of(success ? (_b = {}, _b[success] = source$, _b) : source$));
+	        return main$.combineLatest(rxjs_1.Observable.of(typeof success === "string" ? (_b = {}, _b[success] = source$, _b) : success(source$)), combineLatestSelector);
 	    var _b;
 	}
+	var combineLatestSelector = function (acc, x) { return Object.assign(acc, x); };
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = rootStore;
 

@@ -6,6 +6,7 @@ import shallowEqual from './utils/shallowequal'
 
 export interface Store<S> {
   state$: ReplaySubject<S>
+  subscription: Subscription
   children: { [key: string]: Store<Object> }
   setState: Function,
   subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
@@ -28,7 +29,9 @@ export namespace Meng {
 
 export type Inject = Observable<any> | Promise<any> | Function | Object
 
-export type Resource = { source$: Inject, success?: string }
+export type Success = string | ((state: Object) => Object)
+
+export type Resource = { source$: Inject, success: Success }
 
 /**
  * ImplStore
@@ -43,12 +46,13 @@ export class ImplStore<S> implements Store<S> {
     .distinctUntilChanged(shallowEqual)
     .scan((currentState, nextState) => Object.assign(currentState, nextState), {}) as ReplaySubject<S>
 
-  public main$: ReplaySubject<[S & { children: React.ReactNode }, any]>
+  public subscription: Subscription
 
   public children = {}
 
-  public setState = (nextState: S, callback = () => { }) => {
-    (this.state$.do(callback) as ReplaySubject<S>).next(nextState)
+  public setState = (nextState: S, callback = (state: S) => { }) => {
+    this.state$.next(nextState)
+    this.state$.subscribe(callback).unsubscribe()
   }
 
   public subscribe = (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => {
@@ -70,7 +74,7 @@ function createProxy<T>(target: Store<T>): Store<T> & { [key: string]: Store<Obj
 
 const rootStore = createProxy(new ImplStore())
 
-const inject = (source$: Inject, success?: string) =>
+const inject = (source$: Inject, success?: Success) =>
   <P, S>(component: Meng.Component<P> | Meng.Stateless<P>): any => {
     component.resource.push({ source$, success })
     return component
@@ -84,6 +88,7 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
     private haveOwnPropsChanged: boolean
     private hasStoreStateChanged: boolean
     private _isMounted = false
+    private main$: Observable<S>
     private subscription: Subscription //存放disposable
 
     componentWillUnmount() {
@@ -92,6 +97,7 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
       this.haveOwnPropsChanged = false
       this.hasStoreStateChanged = false
       this.subscription.unsubscribe()
+      rootStore[displayName].subscription.unsubscribe()
     }
 
     componentWillReceiveProps(nextProps: P) {
@@ -106,16 +112,17 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
       //把自己的store挂在全局store里面
       rootStore.children[displayName] = currentStore
       //合并props到main$
-      currentStore.main$ = <any>currentStore.state$.combineLatest(Observable.of(this.props))
+      this.main$ = currentStore.state$.combineLatest(Observable.of(this.props), combineLatestSelector)
       //合并各路数据源到main$
-      LiftedComponent.resource.forEach(source => currentStore.main$ = fork.call(this, currentStore.main$, source))
-      //监听合并完之后的自己的状态源
-      this.subscription = currentStore.main$
-        .map(states => (<any>states).reduce((acc: Object, nextState: Object) => Object.assign(acc, nextState), {}))
-        .subscribe((state: S) => {
-          this.hasStoreStateChanged = true
-          this.setState(state)
-        })
+      LiftedComponent.resource.forEach(source => this.main$ = fork.call(this, this.main$, source))
+      //监听合并完之后的自己的状态源,然后成为state$的事件源
+      this.subscription = this.main$
+        .subscribe(currentStore.setState)
+      //监听自己的状态
+      currentStore.subscription = currentStore.state$.subscribe(state => {
+        this.hasStoreStateChanged = true
+        this.setState(state)
+      })
 
     }
     componentDidMount() {
@@ -127,40 +134,40 @@ const lift = <P, S>(initialState = <S>{}) => (component: Meng.Component<P> | Men
     render() {
       this.hasStoreStateChanged = false
 
-      const props = Object.assign({}, <S & P>this.state)
+      const props = Object.assign({}, initialState, <S & P>this.state)
       return createElement(component as ComponentClass<P>, props)
     }
   }
   // return ConnectComponent
 }
 
-function fork<P, S>(main$: ReplaySubject<S>, {source$, success}: Resource): Observable<[S, any]> {
+function fork<P, S>(main$: ReplaySubject<S>, {source$, success}: Resource): Observable<S> {
 
   // stream
   if (source$ instanceof Observable)
-    return main$.combineLatest(source$.map(source => success ? ({ [success]: source }) : source))
-
+    return main$.combineLatest(source$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
 
   // Promise
   else if (source$ instanceof Promise)
-    return main$.combineLatest(Observable.fromPromise(source$).map(source => success ? ({ [success]: source }) : source))
+    return main$.combineLatest(Observable.fromPromise(source$).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
 
   // Store
   else if (source$ instanceof ImplStore)
-    return main$.combineLatest(source$.state$.map(source => success ? ({ [success]: source }) : source))
+    return main$.combineLatest(source$.state$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
 
   //需要状态的函数需要被lift
   else if (source$ instanceof Function && source$.length > 0)
-    return main$.concatMap(state => fork(main$, { source$: source$(state), success }))
+    return main$.concatMap(state => fork(main$, { source$: source$(state), success }).map(api => Object.assign(state, api)))
 
   //不需要状态的函数一次性执行
   else if (source$ instanceof Function && source$.length === 0)
     return fork(main$, { source$: source$(), success })
 
   else
-    return main$.combineLatest(Observable.of(success ? ({ [success]: source$ }) : source$))
+    return main$.combineLatest(Observable.of(typeof success === "string" ? ({ [success]: source$ }) : success(source$)), combineLatestSelector)
 }
 
+const combineLatestSelector = (acc: Object, x: Object) => Object.assign(acc, x)
 
 export { lift, inject }
 
