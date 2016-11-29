@@ -50,9 +50,9 @@ export class ImplStore<S> implements Store<S> {
 
   public children = {}
 
-  public setState = (nextState: S, callback = (state: S) => { }) => {
+  public setState = (nextState: S, callback?: (state: S) => {}) => {
     this.state$.next(nextState)
-    this.state$.subscribe(callback).unsubscribe()
+    if (callback) this.state$.subscribe(callback).unsubscribe()
   }
 
   public subscribe = (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => {

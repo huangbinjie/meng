@@ -16,9 +16,9 @@ var ImplStore = (function () {
             .scan(function (currentState, nextState) { return Object.assign(currentState, nextState); }, {});
         this.children = {};
         this.setState = function (nextState, callback) {
-            if (callback === void 0) { callback = function (state) { }; }
             _this.state$.next(nextState);
-            _this.state$.subscribe(callback).unsubscribe();
+            if (callback)
+                _this.state$.subscribe(callback).unsubscribe();
         };
         this.subscribe = function (success, error, complete) {
             return _this.state$.subscribe(success, error, complete);
