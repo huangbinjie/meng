@@ -73,7 +73,7 @@ function createProxy<T>(target: Store<T>): Store<T> & { [key: string]: Store<Obj
 
 const rootStore = createProxy(new ImplStore())
 
-const inject = (source$: Inject, success?: Success) =>
+const inject = (source$: Inject, success: Success) =>
   <P, S>(component: Meng.Component<P> | Meng.Stateless<P>): any => {
     component.resource.push({ source$, success })
     return component

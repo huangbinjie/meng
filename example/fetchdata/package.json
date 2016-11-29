@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "dependencies": {
+    "@types/react-dom": "^0.14.19",
+    "react": "^15.3.1",
+    "react-dom": "^15.4.1",
+    "react-iscroller": "^1.0.5"
+  }
+}
