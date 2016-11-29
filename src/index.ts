@@ -5,7 +5,7 @@ import shallowEqual from './utils/shallowequal'
 
 export interface Store<S> {
     state$: ReplaySubject<S>
-    subscription: Subscription
+    store$: Observable<S>
     children: { [key: string]: Store<Object> }
     setState: Function,
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
@@ -38,25 +38,23 @@ export type Resource = { source$: Inject, success: Success }
  */
 export class ImplStore<S> implements Store<S> {
     constructor(initialState = <S>{}) {
-        this.state$.next(initialState)
+        this.state$.next(Object.assign({ setState: this.setState, callback: () => { } }, initialState))
     }
-    public main$: Observable<S>
-    
+
+    public store$: Observable<S & { setState: Function, callback: () => void }>
+
     public state$ = new ReplaySubject(1)
         .distinctUntilChanged(shallowEqual)
-        .scan((currentState, nextState) => Object.assign(currentState, nextState), {}) as ReplaySubject<S>
-
-    public subscription: Subscription
+        .scan((currentState, nextState) => Object.assign(currentState, nextState), {}) as ReplaySubject<S & { setState: Function, callback: () => void }>
 
     public children = {}
 
-    public setState = (nextState: S, callback?: (state: S) => {}) => {
-        this.state$.next(nextState)
-        if (callback) this.state$.subscribe(callback).unsubscribe()
+    public setState = (nextState: S, callback = () => { }) => {
+        this.state$.next(Object.assign(nextState, { setState: this.setState, callback }))
     }
 
     public subscribe = (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => {
-        return this.state$.subscribe(success, error, complete)
+        return this.store$.subscribe(success, error, complete)
     }
 
 }
@@ -94,7 +92,6 @@ const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: M
             this._isMounted = false
             this.hasStoreStateChanged = false
             this.subscription.unsubscribe()
-            rootStore[displayName].subscription.unsubscribe()
         }
 
         componentWillReceiveProps(nextProps: P) {
@@ -104,20 +101,18 @@ const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: M
         componentWillMount() {
             //创建自己的store
             const currentStore = new ImplStore(initialState)
-            //修改原生的setState，改成meng的setstate
-            component.prototype["setState"] = currentStore.setState.bind(currentStore)
             //把自己的store挂在全局store里面
             rootStore.children[displayName] = currentStore
             //合并props到main$
-            this.main$ = currentStore.state$.combineLatest(Observable.of(this.props), combineLatestSelector)
+            currentStore.store$ = currentStore.state$.combineLatest(Observable.of(this.props), combineLatestSelector)
             //合并各路数据源到main$
-            LiftedComponent.resource.forEach(source => this.main$ = fork.call(this, this.main$, source))
+            LiftedComponent.resource.forEach(source => currentStore.store$ = fork(currentStore.store$, source))
             //监听合并完之后的自己的状态源
-            this.subscription = this.main$
+            this.subscription = currentStore.store$
                 .subscribe(state => {
-                this.hasStoreStateChanged = true
-                this.setState(state)
-            })
+                    this.hasStoreStateChanged = true
+                    this.setState(state, state.callback)
+                })
 
         }
         componentDidMount() {
@@ -136,30 +131,32 @@ const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: M
     // return ConnectComponent
 }
 
-function fork<P, S>(main$: ReplaySubject<S>, {source$, success}: Resource): Observable<S> {
+function fork<P, S>(store$: Observable<S>, {source$, success}: Resource): Observable<S> {
 
     // stream
     if (source$ instanceof Observable)
-        return main$.combineLatest(source$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
+        return store$.combineLatest(source$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
 
     // Promise
     else if (source$ instanceof Promise)
-        return main$.combineLatest(Observable.fromPromise(source$).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
+        return store$.combineLatest(Observable.fromPromise(source$).map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
 
     // Store
     else if (source$ instanceof ImplStore)
-        return main$.combineLatest(source$.state$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
+        return store$.combineLatest(source$.state$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
 
     //需要状态的函数需要被再次执行
-    else if (source$ instanceof Function && source$.length > 0)
-        return main$.flatMap(state => fork(main$, { source$: source$(state), success }).map(api => Object.assign(state, api)))
+    else if (source$ instanceof Function && source$.length > 0) {
+        const merge$ = store$.flatMap(state => fork(store$, { source$: source$(state), success }).map(state => Object.assign(state, { callback: () => { } })))
+        return store$.combineLatest(merge$, combineLatestSelector)
+    }
 
     //不需要状态的函数一次性执行
     else if (source$ instanceof Function && source$.length === 0)
-        return fork(main$, { source$: source$(), success })
+        return fork(store$, { source$: source$(), success })
 
     else
-        return main$.combineLatest(Observable.of(typeof success === "string" ? ({ [success]: source$ }) : success(source$)), combineLatestSelector)
+        return store$.map(state => Object.assign(state, typeof success === "string" ? ({ [success]: source$ }) : success(source$)))
 }
 
 const combineLatestSelector = (acc: Object, x: Object) => Object.assign(acc, x)

@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { render } from 'react-dom'
+import { Observable } from 'rxjs'
 
-import { lift, inject } from '../../../src/'
+import Store, { lift, inject } from '../../../src/'
 import { fetchData } from './api'
 
 type State = {
@@ -9,9 +10,12 @@ type State = {
     page: number
 }
 
+@inject(Store, "rootStore")
+@inject(() => Observable.of(1), "c")
+@inject(() => 1, "n")
 @inject(fetchData, "lis")
 @lift({ lis: [], page: 1 })
-class App extends React.Component<any, any> {
+class App extends React.Component<any, void> {
     render() {
         console.log(this.props)
         const lis = this.props.lis.map((n: string, i: number) => <li key={i} style={{ height: "20px", lineHeight: "20px" }}>{n}</li>)
@@ -27,12 +31,12 @@ class App extends React.Component<any, any> {
     }
     private previousPage = () => {
         if (this.props.page === 1) return
-        this.setState({ page: this.props.page - 1 })
+        this.props.setState({ page: this.props.page - 1 }, () => console.log("上一页"))
     }
 
     private nextPage = () => {
         if (this.props.page === 5) return
-        this.setState({ page: this.props.page + 1 })
+        this.props.setState({ page: this.props.page + 1 })
     }
 }
 
