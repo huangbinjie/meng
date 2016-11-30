@@ -10,9 +10,7 @@ function* dataGenerator() {
     }
 }
 const gen = dataGenerator();
-exports.fetchData = () => new Promise((resolve, reject) => {
-    setTimeout(() => {
-        console.log("this is a request");
-        resolve(gen.next().value);
-    }, 1000);
+exports.fetchData = (state) => new Promise((resolve, reject) => {
+    console.log("this is a request");
+    resolve(gen.next().value);
 });

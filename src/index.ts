@@ -26,9 +26,9 @@ export namespace Meng {
     }
 }
 
-export type Inject = Observable<any> | Promise<any> | (<S>(state?: S) => Inject) | Object
+export type Inject = Observable<any> | Promise<any> | (<S>(store?: S) => (state: S) => Inject) | Object
 
-export type Success = string | ((state: Object) => Object)
+export type Success = string | ((store: Object, state: Object) => Object)
 
 export type Resource = { source$: Inject, success: Success }
 
@@ -132,32 +132,39 @@ const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: M
     // return ConnectComponent
 }
 
-function fork<P, S>(store$: Observable<S>, {source$, success}: Resource): Observable<S> {
+// source$是函数才执行异步操作，其他则是同步操作
+function fork<S>(store$: Observable<S>, {source$, success}: Resource): Observable<S> {
 
     // stream
-    if (source$ instanceof Observable)
-        return store$.combineLatest(source$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
+    if (source$ instanceof Observable) {
+        const branch$ = store$.flatMap(store => source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)))
+        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector)
+    }
 
     // Promise
-    else if (source$ instanceof Promise)
-        return store$.combineLatest(Observable.fromPromise(source$).map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
+    else if (source$ instanceof Promise) {
+        const branch$ = store$.do(x => console.log(x)).flatMap(store => Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)))
+        return store$.switchMapTo(branch$, combineLatestSelector)
+    }
 
     // Store
-    else if (source$ instanceof ImplStore)
-        return store$.combineLatest(source$.state$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector)
+    else if (source$ instanceof ImplStore) {
+        const branch$ = store$.flatMap(store => source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)))
+        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector)
+    }
 
-    //需要状态的函数需要被再次执行
+    //需要状态的函数需要被再次执行，如果调用结果是undefined则返回自己,或者调用你的selector，并把store传给selector
     else if (source$ instanceof Function && source$.length > 0) {
-        const merge$ = store$.flatMap(state => fork(store$, { source$: source$(state) || (typeof success === "string" ? (<any>state)[success] : success(state)), success }).map(state => Object.assign(state, { callback: () => { } })))
+        const merge$ = store$.flatMap(store => fork(store$, { source$: source$(store), success }).map(state => Object.assign(state, { callback: () => { } })))
         return store$.combineLatest(merge$, combineLatestSelector)
     }
 
     //不需要状态的函数一次性执行
     else if (source$ instanceof Function && source$.length === 0)
-        return fork(store$, { source$: source$(), success })
+        return store$.combineLatest(fork(store$, { source$: source$(), success }), combineLatestSelector)
 
     else
-        return store$.map(state => Object.assign(state, typeof success === "string" ? ({ [success]: source$ }) : success(source$)))
+        return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)))
 }
 
 const combineLatestSelector = (acc: Object, x: Object) => Object.assign(acc, x)

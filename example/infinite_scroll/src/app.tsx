@@ -5,8 +5,11 @@ import Scroll from 'react-iscroller'
 import { lift, inject } from '../../../src/'
 import { fetchData } from './api'
 
-@inject(fetchData, "lis")
-@lift({ lis: [] })
+@inject(fetchData, (store, state) => {
+    console.log(state)
+    return ({ lis: (store as any)["lis"].concat(state) })
+})
+@lift({ lis: [], page: 1 })
 class App extends React.Component<any, any> {
     render() {
         const lis = this.props.lis.map((n: string, i: number) => <li key={i} style={{ height: "20px", lineHeight: "20px" }}>{n}</li>)
@@ -17,7 +20,7 @@ class App extends React.Component<any, any> {
         )
     }
     private onend = () => {
-        fetchData().then(list => this.setState({ lis: this.props.lis.concat(list) }))
+        this.props.setState({})
     }
 }
 

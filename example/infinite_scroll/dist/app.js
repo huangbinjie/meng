@@ -63,7 +63,7 @@
 	    constructor() {
 	        super(...arguments);
 	        this.onend = () => {
-	            api_1.fetchData().then(list => this.setState({ lis: this.props.lis.concat(list) }));
+	            this.props.setState({});
 	        };
 	    }
 	    render() {
@@ -73,8 +73,11 @@
 	    }
 	};
 	App = __decorate([
-	    _1.inject(api_1.fetchData, "lis"),
-	    _1.lift({ lis: [] }),
+	    _1.inject(api_1.fetchData, (store, state) => {
+	        console.log(state);
+	        return ({ lis: store["lis"].concat(state) });
+	    }),
+	    _1.lift({ lis: [], page: 1 }),
 	    __metadata("design:paramtypes", [])
 	], App);
 	react_dom_1.render(React.createElement(App, null), document.getElementById("root"));
@@ -21567,18 +21570,15 @@
 	class ImplStore {
 	    constructor(initialState = {}) {
 	        this.state$ = new rxjs_1.ReplaySubject(1)
-	            .distinctUntilChanged(shallowequal_1.default)
 	            .scan((currentState, nextState) => Object.assign(currentState, nextState), {});
 	        this.children = {};
-	        this.setState = (nextState, callback) => {
-	            this.state$.next(nextState);
-	            if (callback)
-	                this.state$.subscribe(callback).unsubscribe();
+	        this.setState = (nextState, callback = () => { }) => {
+	            this.state$.next(Object.assign(nextState, { setState: this.setState, callback }));
 	        };
 	        this.subscribe = (success, error, complete) => {
-	            return this.state$.subscribe(success, error, complete);
+	            return this.store$.subscribe(success, error, complete);
 	        };
-	        this.state$.next(initialState);
+	        this.state$.next(Object.assign({ setState: this.setState, callback: () => { } }, initialState));
 	    }
 	}
 	exports.ImplStore = ImplStore;
@@ -21610,22 +21610,21 @@
 	                this._isMounted = false;
 	                this.hasStoreStateChanged = false;
 	                this.subscription.unsubscribe();
-	                rootStore[displayName].subscription.unsubscribe();
 	            }
 	            componentWillReceiveProps(nextProps) {
 	                rootStore[displayName].setState(nextProps);
 	            }
 	            componentWillMount() {
 	                const currentStore = new ImplStore(initialState);
-	                component.prototype["setState"] = currentStore.setState.bind(currentStore);
 	                rootStore.children[displayName] = currentStore;
-	                this.main$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props), combineLatestSelector);
-	                LiftedComponent.resource.forEach(source => this.main$ = fork.call(this, this.main$, source));
-	                this.subscription = this.main$
-	                    .subscribe(currentStore.setState);
-	                currentStore.subscription = currentStore.state$.subscribe(state => {
-	                    this.hasStoreStateChanged = true;
-	                    this.setState(state);
+	                currentStore.store$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props), combineLatestSelector);
+	                LiftedComponent.resource.forEach(source => currentStore.store$ = fork(currentStore.store$, source));
+	                this.subscription = currentStore.store$
+	                    .subscribe(state => {
+	                    if (!shallowequal_1.default(state, this.state)) {
+	                        this.hasStoreStateChanged = true;
+	                        this.setState(state, state.callback);
+	                    }
 	                });
 	            }
 	            componentDidMount() {
@@ -21646,19 +21645,27 @@
 	    var _a;
 	};
 	exports.lift = lift;
-	function fork(main$, { source$, success }) {
-	    if (source$ instanceof rxjs_1.Observable)
-	        return main$.combineLatest(source$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-	    else if (source$ instanceof Promise)
-	        return main$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-	    else if (source$ instanceof ImplStore)
-	        return main$.combineLatest(source$.state$.map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-	    else if (source$ instanceof Function && source$.length > 0)
-	        return main$.concatMap(state => fork(main$, { source$: source$(state), success }).map(api => Object.assign(state, api)));
+	function fork(store$, { source$, success }) {
+	    if (source$ instanceof rxjs_1.Observable) {
+	        const branch$ = store$.flatMap(store => source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
+	        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector);
+	    }
+	    else if (source$ instanceof Promise) {
+	        const branch$ = store$.do(x => console.log(x)).flatMap(store => rxjs_1.Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
+	        return store$.switchMapTo(branch$, combineLatestSelector);
+	    }
+	    else if (source$ instanceof ImplStore) {
+	        const branch$ = store$.flatMap(store => source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
+	        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector);
+	    }
+	    else if (source$ instanceof Function && source$.length > 0) {
+	        const merge$ = store$.flatMap(store => fork(store$, { source$: source$(store), success }).map(state => Object.assign(state, { callback: () => { } })));
+	        return store$.combineLatest(merge$, combineLatestSelector);
+	    }
 	    else if (source$ instanceof Function && source$.length === 0)
-	        return fork(main$, { source$: source$(), success });
+	        return store$.combineLatest(fork(store$, { source$: source$(), success }), combineLatestSelector);
 	    else
-	        return main$.combineLatest(rxjs_1.Observable.of(typeof success === "string" ? ({ [success]: source$ }) : success(source$)), combineLatestSelector);
+	        return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)));
 	}
 	const combineLatestSelector = (acc, x) => Object.assign(acc, x);
 	Object.defineProperty(exports, "__esModule", { value: true });
@@ -43862,11 +43869,9 @@
 	    }
 	}
 	const gen = dataGenerator();
-	exports.fetchData = () => new Promise((resolve, reject) => {
-	    setTimeout(() => {
-	        console.log("this is a request");
-	        resolve(gen.next().value);
-	    }, 1000);
+	exports.fetchData = (state) => new Promise((resolve, reject) => {
+	    console.log("this is a request");
+	    resolve(gen.next().value);
 	});
 
 

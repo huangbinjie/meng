@@ -17,7 +17,7 @@ let App = class App extends React.Component {
     constructor() {
         super(...arguments);
         this.onend = () => {
-            api_1.fetchData().then(list => this.setState({ lis: this.props.lis.concat(list) }));
+            this.props.setState({});
         };
     }
     render() {
@@ -27,8 +27,11 @@ let App = class App extends React.Component {
     }
 };
 App = __decorate([
-    _1.inject(api_1.fetchData, "lis"),
-    _1.lift({ lis: [] }),
+    _1.inject(api_1.fetchData, (store, state) => {
+        console.log(state);
+        return ({ lis: store["lis"].concat(state) });
+    }),
+    _1.lift({ lis: [], page: 1 }),
     __metadata("design:paramtypes", [])
 ], App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("root"));

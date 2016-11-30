@@ -5,7 +5,6 @@ const shallowequal_1 = require("./utils/shallowequal");
 class ImplStore {
     constructor(initialState = {}) {
         this.state$ = new rxjs_1.ReplaySubject(1)
-            .distinctUntilChanged(shallowequal_1.default)
             .scan((currentState, nextState) => Object.assign(currentState, nextState), {});
         this.children = {};
         this.setState = (nextState, callback = () => { }) => {
@@ -57,8 +56,10 @@ const lift = (initialState = {}, initialName) => (component) => {
                 LiftedComponent.resource.forEach(source => currentStore.store$ = fork(currentStore.store$, source));
                 this.subscription = currentStore.store$
                     .subscribe(state => {
-                    this.hasStoreStateChanged = true;
-                    this.setState(state, state.callback);
+                    if (!shallowequal_1.default(state, this.state)) {
+                        this.hasStoreStateChanged = true;
+                        this.setState(state, state.callback);
+                    }
                 });
             }
             componentDidMount() {
@@ -80,20 +81,26 @@ const lift = (initialState = {}, initialName) => (component) => {
 };
 exports.lift = lift;
 function fork(store$, { source$, success }) {
-    if (source$ instanceof rxjs_1.Observable)
-        return store$.combineLatest(source$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-    else if (source$ instanceof Promise)
-        return store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-    else if (source$ instanceof ImplStore)
-        return store$.combineLatest(source$.state$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
+    if (source$ instanceof rxjs_1.Observable) {
+        const branch$ = store$.flatMap(store => source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
+        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector);
+    }
+    else if (source$ instanceof Promise) {
+        const branch$ = store$.do(x => console.log(x)).flatMap(store => rxjs_1.Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
+        return store$.switchMapTo(branch$, combineLatestSelector);
+    }
+    else if (source$ instanceof ImplStore) {
+        const branch$ = store$.flatMap(store => source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
+        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector);
+    }
     else if (source$ instanceof Function && source$.length > 0) {
-        const merge$ = store$.flatMap(state => fork(store$, { source$: source$(state), success }).map(state => Object.assign(state, { callback: () => { } })));
+        const merge$ = store$.flatMap(store => fork(store$, { source$: source$(store), success }).map(state => Object.assign(state, { callback: () => { } })));
         return store$.combineLatest(merge$, combineLatestSelector);
     }
     else if (source$ instanceof Function && source$.length === 0)
-        return fork(store$, { source$: source$(), success });
+        return store$.combineLatest(fork(store$, { source$: source$(), success }), combineLatestSelector);
     else
-        return store$.map(state => Object.assign(state, typeof success === "string" ? ({ [success]: source$ }) : success(source$)));
+        return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)));
 }
 const combineLatestSelector = (acc, x) => Object.assign(acc, x);
 Object.defineProperty(exports, "__esModule", { value: true });
