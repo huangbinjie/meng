@@ -67,7 +67,6 @@
 	        };
 	    }
 	    render() {
-	        console.log(this.props.lis);
 	        const lis = this.props.lis.map((n, i) => React.createElement("li", { key: i, style: { height: "20px", lineHeight: "20px" } }, n));
 	        return (React.createElement("div", null,
 	            React.createElement(react_iscroller_1.default, { onEnd: this.onend }, lis)));
@@ -21565,8 +21564,6 @@
 
 	"use strict";
 	const rxjs_1 = __webpack_require__(180);
-	const react_1 = __webpack_require__(521);
-	const shallowequal_1 = __webpack_require__(557);
 	class ImplStore {
 	    constructor(initialState = {}) {
 	        this.state$ = new rxjs_1.ReplaySubject(1)
@@ -21593,75 +21590,10 @@
 	    });
 	}
 	const rootStore = createProxy(new ImplStore());
-	const inject = (source$, success) => (component) => {
-	    component.resource.push({ source$, success });
-	    return component;
-	};
-	exports.inject = inject;
-	const lift = (initialState = {}, initialName) => (component) => {
-	    const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
-	    return _a = class LiftedComponent extends react_1.Component {
-	            constructor() {
-	                super(...arguments);
-	                this._isMounted = false;
-	            }
-	            componentWillUnmount() {
-	                rootStore[displayName] = null;
-	                this._isMounted = false;
-	                this.hasStoreStateChanged = false;
-	                this.subscription.unsubscribe();
-	            }
-	            componentWillReceiveProps(nextProps) {
-	                rootStore[displayName].setState(nextProps);
-	            }
-	            componentWillMount() {
-	                const currentStore = new ImplStore(initialState);
-	                rootStore.children[displayName] = currentStore;
-	                currentStore.store$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props), combineLatestSelector);
-	                LiftedComponent.resource.forEach(source => currentStore.store$ = fork(currentStore.store$, source));
-	                this.subscription = currentStore.store$
-	                    .subscribe(state => {
-	                    if (!shallowequal_1.default(state, this.state)) {
-	                        this.hasStoreStateChanged = true;
-	                        this.setState(state, state.callback);
-	                    }
-	                });
-	            }
-	            componentDidMount() {
-	                this._isMounted = true;
-	            }
-	            shouldComponentUpdate() {
-	                return this.hasStoreStateChanged;
-	            }
-	            render() {
-	                this.hasStoreStateChanged = false;
-	                const props = Object.assign({}, initialState, this.state);
-	                return react_1.createElement(component, props);
-	            }
-	        },
-	        _a.displayName = `Meng(${displayName})`,
-	        _a.resource = [],
-	        _a;
-	    var _a;
-	};
-	exports.lift = lift;
-	function fork(store$, { source$, success }) {
-	    if (source$ instanceof rxjs_1.Observable)
-	        return store$.switchMap(store => store$.combineLatest(source$.map(resetCallback).map(implSelector(store, success)), combineLatestSelector));
-	    else if (source$ instanceof Promise)
-	        return store$.switchMap(store => store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(resetCallback).map(implSelector(store, success)), combineLatestSelector));
-	    else if (source$ instanceof ImplStore)
-	        return store$.switchMap(store => store$.combineLatest(source$.state$.map(resetCallback).map(implSelector(store, success)), combineLatestSelector));
-	    else if (source$ instanceof Function && source$.length > 0)
-	        return store$.switchMap(store => fork(store$, { source$: source$(store), success }));
-	    else if (source$ instanceof Function && source$.length === 0)
-	        return fork(store$, { source$: source$(), success });
-	    else
-	        return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)));
-	}
-	const combineLatestSelector = (acc, x) => Object.assign(acc, x);
-	const resetCallback = (state) => Object.assign(state, { callback: () => { } });
-	const implSelector = (store, success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(store, state);
+	var lift_1 = __webpack_require__(559);
+	exports.lift = lift_1.lift;
+	var inject_1 = __webpack_require__(561);
+	exports.inject = inject_1.inject;
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = rootStore;
 
@@ -43863,10 +43795,106 @@
 	    }
 	}
 	const gen = dataGenerator();
-	exports.fetchData = () => new Promise((resolve, reject) => {
+	exports.fetchData = (state) => new Promise((resolve, reject) => {
 	    console.log("this is a request");
 	    resolve(gen.next().value);
 	});
+
+
+/***/ },
+/* 559 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	const react_1 = __webpack_require__(521);
+	const _1 = __webpack_require__(179);
+	const rxjs_1 = __webpack_require__(180);
+	const fork_1 = __webpack_require__(560);
+	const shallowequal_1 = __webpack_require__(557);
+	exports.lift = (initialState = {}, initialName) => (component) => {
+	    const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
+	    return _a = class LiftedComponent extends react_1.Component {
+	            constructor() {
+	                super(...arguments);
+	                this._isMounted = false;
+	            }
+	            componentWillUnmount() {
+	                _1.default[displayName] = null;
+	                this._isMounted = false;
+	                this.hasStoreStateChanged = false;
+	                this.subscription.unsubscribe();
+	            }
+	            componentWillReceiveProps(nextProps) {
+	                _1.default[displayName].setState(nextProps);
+	            }
+	            componentWillMount() {
+	                const currentStore = new _1.ImplStore(initialState);
+	                _1.default.children[displayName] = currentStore;
+	                currentStore.store$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props), fork_1.combineLatestSelector);
+	                LiftedComponent.resource.forEach(source => currentStore.store$ = fork_1.fork(currentStore.store$, source));
+	                this.subscription = currentStore.store$
+	                    .subscribe(state => {
+	                    if (!shallowequal_1.default(state, this.state)) {
+	                        this.hasStoreStateChanged = true;
+	                        this.setState(state, state.callback);
+	                    }
+	                });
+	            }
+	            componentDidMount() {
+	                this._isMounted = true;
+	            }
+	            shouldComponentUpdate() {
+	                return this.hasStoreStateChanged;
+	            }
+	            render() {
+	                this.hasStoreStateChanged = false;
+	                const props = Object.assign({}, initialState, this.state);
+	                return react_1.createElement(component, props);
+	            }
+	        },
+	        _a.displayName = `Meng(${displayName})`,
+	        _a.resource = [],
+	        _a;
+	    var _a;
+	};
+
+
+/***/ },
+/* 560 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	const rxjs_1 = __webpack_require__(180);
+	const _1 = __webpack_require__(179);
+	function fork(store$, { source$, success }) {
+	    if (source$ instanceof rxjs_1.Observable)
+	        return store$.switchMap(store => store$.combineLatest(source$.map(exports.resetCallback).map(exports.implSelector(store, success)), exports.combineLatestSelector));
+	    else if (source$ instanceof Promise)
+	        return store$.switchMap(store => store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(exports.resetCallback).map(exports.implSelector(store, success)), exports.combineLatestSelector));
+	    else if (source$ instanceof _1.ImplStore)
+	        return store$.switchMap(store => store$.combineLatest(source$.state$.map(exports.resetCallback).map(exports.implSelector(store, success)), exports.combineLatestSelector));
+	    else if (source$ instanceof Function && source$.length > 0)
+	        return store$.switchMap(store => fork(store$, { source$: source$(store), success }));
+	    else if (source$ instanceof Function && source$.length === 0)
+	        return fork(store$, { source$: source$(), success });
+	    else
+	        return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)));
+	}
+	exports.fork = fork;
+	exports.combineLatestSelector = (acc, x) => Object.assign(acc, x);
+	exports.resetCallback = (state) => Object.assign(state, { callback: () => { } });
+	exports.implSelector = (store, success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(store, state);
+
+
+/***/ },
+/* 561 */
+/***/ function(module, exports) {
+
+	"use strict";
+	exports.inject = (source$, success) => (component) => {
+	    component.resource.push({ source$, success });
+	    return component;
+	};
 
 
 /***/ }

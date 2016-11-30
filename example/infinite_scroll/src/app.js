@@ -21,7 +21,6 @@ let App = class App extends React.Component {
         };
     }
     render() {
-        console.log(this.props.lis);
         const lis = this.props.lis.map((n, i) => React.createElement("li", { key: i, style: { height: "20px", lineHeight: "20px" } }, n));
         return (React.createElement("div", null,
             React.createElement(react_iscroller_1.default, { onEnd: this.onend }, lis)));
