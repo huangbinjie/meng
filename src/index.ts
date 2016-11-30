@@ -148,7 +148,7 @@ function fork<P, S>(store$: Observable<S>, {source$, success}: Resource): Observ
 
     //需要状态的函数需要被再次执行
     else if (source$ instanceof Function && source$.length > 0) {
-        const merge$ = store$.flatMap(state => fork(store$, { source$: source$(state), success }).map(state => Object.assign(state, { callback: () => { } })))
+        const merge$ = store$.flatMap(state => fork(store$, { source$: source$(state) || (typeof success === "string" ? (<any>state)[success] : success(state)), success }).map(state => Object.assign(state, { callback: () => { } })))
         return store$.combineLatest(merge$, combineLatestSelector)
     }
 
