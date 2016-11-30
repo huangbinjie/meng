@@ -82,23 +82,17 @@ const lift = (initialState = {}, initialName) => (component) => {
 exports.lift = lift;
 function fork(store$, { source$, success }) {
     if (source$ instanceof rxjs_1.Observable) {
-        const branch$ = store$.flatMap(store => source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
-        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector);
+        return store$.combineLatest(source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(state)), combineLatestSelector);
     }
     else if (source$ instanceof Promise) {
-        const branch$ = store$.do(x => console.log(x)).flatMap(store => rxjs_1.Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
-        return store$.switchMapTo(branch$, combineLatestSelector);
+        return store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(state)), combineLatestSelector);
     }
     else if (source$ instanceof ImplStore) {
-        const branch$ = store$.flatMap(store => source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(store, state)));
-        return store$.takeUntil(branch$).combineLatest(branch$, combineLatestSelector);
+        return store$.combineLatest(source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(state)), combineLatestSelector);
     }
-    else if (source$ instanceof Function && source$.length > 0) {
-        const merge$ = store$.flatMap(store => fork(store$, { source$: source$(store), success }).map(state => Object.assign(state, { callback: () => { } })));
-        return store$.combineLatest(merge$, combineLatestSelector);
+    else if (source$ instanceof Function) {
+        return store$.switchMap(store => fork(store$, { source$: source$(store), success: typeof success === "string" ? success : success.bind(null, store) }));
     }
-    else if (source$ instanceof Function && source$.length === 0)
-        return store$.combineLatest(fork(store$, { source$: source$(), success }), combineLatestSelector);
     else
         return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)));
 }

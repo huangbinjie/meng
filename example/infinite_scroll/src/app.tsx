@@ -6,12 +6,12 @@ import { lift, inject } from '../../../src/'
 import { fetchData } from './api'
 
 @inject(fetchData, (store, state) => {
-    console.log(state)
     return ({ lis: (store as any)["lis"].concat(state) })
 })
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, any> {
     render() {
+        console.log(this.props.lis)
         const lis = this.props.lis.map((n: string, i: number) => <li key={i} style={{ height: "20px", lineHeight: "20px" }}>{n}</li>)
         return (
             <div>

@@ -21,6 +21,7 @@ let App = class App extends React.Component {
         };
     }
     render() {
+        console.log(this.props.lis);
         const lis = this.props.lis.map((n, i) => React.createElement("li", { key: i, style: { height: "20px", lineHeight: "20px" } }, n));
         return (React.createElement("div", null,
             React.createElement(react_iscroller_1.default, { onEnd: this.onend }, lis)));
@@ -28,7 +29,6 @@ let App = class App extends React.Component {
 };
 App = __decorate([
     _1.inject(api_1.fetchData, (store, state) => {
-        console.log(state);
         return ({ lis: store["lis"].concat(state) });
     }),
     _1.lift({ lis: [], page: 1 }),

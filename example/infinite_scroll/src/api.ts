@@ -2,7 +2,7 @@ function* dataGenerator() {
   let index = 0
   while (true) {
     const arr: number[] = []
-    for (let i = 50; i--;) {
+    for (let i = 100; i--;) {
       arr.push(index++)
     }
     yield arr
