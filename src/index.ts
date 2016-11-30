@@ -44,7 +44,6 @@ export class ImplStore<S> implements Store<S> {
     public store$: Observable<S & { setState: Function, callback: () => void }>
 
     public state$ = new ReplaySubject(1)
-        .distinctUntilChanged(shallowEqual)
         .scan((currentState, nextState) => Object.assign(currentState, nextState), {}) as ReplaySubject<S & { setState: Function, callback: () => void }>
 
     public children = {}
@@ -110,8 +109,10 @@ const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: M
             //监听合并完之后的自己的状态源
             this.subscription = currentStore.store$
                 .subscribe(state => {
-                    this.hasStoreStateChanged = true
-                    this.setState(state, state.callback)
+                    if (!shallowEqual(state, this.state)) {
+                        this.hasStoreStateChanged = true
+                        this.setState(state, state.callback)
+                    }
                 })
 
         }
