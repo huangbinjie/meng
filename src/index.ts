@@ -139,30 +139,34 @@ const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: M
 function fork<S>(store$: Observable<S>, {source$, success}: Resource): Observable<S> {
 
     // stream
-    if (source$ instanceof Observable) {
-        return store$.combineLatest(source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : (<(state: S) => Object>success)(state)), combineLatestSelector)
-    }
+    if (source$ instanceof Observable)
+        return store$.switchMap(store => store$.combineLatest(source$.map(resetCallback).map(implSelector(store, success)), combineLatestSelector))
 
     // Promise
-    else if (source$ instanceof Promise) {
-        return store$.combineLatest(Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : (<(state: S) => Object>success)(state)), combineLatestSelector)
-    }
+    else if (source$ instanceof Promise)
+        return store$.switchMap(store => store$.combineLatest(Observable.fromPromise(source$).map(resetCallback).map(implSelector(store, success)), combineLatestSelector))
 
     // Store
-    else if (source$ instanceof ImplStore) {
-        return store$.combineLatest(source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : (<(state: S) => Object>success)(state)), combineLatestSelector)
-    }
+    else if (source$ instanceof ImplStore)
+        return store$.switchMap(store => store$.combineLatest(source$.state$.map(resetCallback).map(implSelector(store, success)), combineLatestSelector))
 
-    //function，在该分支把store，和state传给selector
-    else if (source$ instanceof Function) {
-        return store$.switchMap(store => fork(store$, { source$: source$(store), success: typeof success === "string" ? success : success.bind(null, store) }))
-    }
+    //function，需要状态的函数换分支
+    else if (source$ instanceof Function && source$.length > 0)
+        return store$.switchMap(store => fork(store$, { source$: source$(store), success }))
+
+    //不需要状态的函数继续执行
+    else if (source$ instanceof Function && source$.length === 0)
+        return fork(store$, { source$: source$(), success })
 
     else
         return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)))
 }
 
 const combineLatestSelector = (acc: Object, x: Object) => Object.assign(acc, x)
+
+const resetCallback = (state: Object) => Object.assign(state, { callback: () => { } })
+
+const implSelector = (store: Object, success: Success) => (state: Object) => typeof success === "string" ? ({ [success]: state }) : success(store, state)
 
 export { lift, inject }
 

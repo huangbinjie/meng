@@ -11,7 +11,6 @@ import { fetchData } from './api'
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, any> {
     render() {
-        console.log(this.props.lis)
         const lis = this.props.lis.map((n: string, i: number) => <li key={i} style={{ height: "20px", lineHeight: "20px" }}>{n}</li>)
         return (
             <div>

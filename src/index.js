@@ -81,21 +81,21 @@ const lift = (initialState = {}, initialName) => (component) => {
 };
 exports.lift = lift;
 function fork(store$, { source$, success }) {
-    if (source$ instanceof rxjs_1.Observable) {
-        return store$.combineLatest(source$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(state)), combineLatestSelector);
-    }
-    else if (source$ instanceof Promise) {
-        return store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(state)), combineLatestSelector);
-    }
-    else if (source$ instanceof ImplStore) {
-        return store$.combineLatest(source$.state$.map(state => Object.assign(state, { callback: () => { } })).map(state => typeof success === "string" ? ({ [success]: state }) : success(state)), combineLatestSelector);
-    }
-    else if (source$ instanceof Function) {
-        return store$.switchMap(store => fork(store$, { source$: source$(store), success: typeof success === "string" ? success : success.bind(null, store) }));
-    }
+    if (source$ instanceof rxjs_1.Observable)
+        return store$.switchMap(store => store$.combineLatest(source$.map(resetCallback).map(implSelector(store, success)), combineLatestSelector));
+    else if (source$ instanceof Promise)
+        return store$.switchMap(store => store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(resetCallback).map(implSelector(store, success)), combineLatestSelector));
+    else if (source$ instanceof ImplStore)
+        return store$.switchMap(store => store$.combineLatest(source$.state$.map(resetCallback).map(implSelector(store, success)), combineLatestSelector));
+    else if (source$ instanceof Function && source$.length > 0)
+        return store$.switchMap(store => fork(store$, { source$: source$(store), success }));
+    else if (source$ instanceof Function && source$.length === 0)
+        return fork(store$, { source$: source$(), success });
     else
         return store$.map(store => Object.assign(store, typeof success === "string" ? ({ [success]: source$ }) : success(store, source$)));
 }
 const combineLatestSelector = (acc, x) => Object.assign(acc, x);
+const resetCallback = (state) => Object.assign(state, { callback: () => { } });
+const implSelector = (store, success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(store, state);
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = rootStore;
