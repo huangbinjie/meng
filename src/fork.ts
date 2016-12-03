@@ -3,8 +3,7 @@ import { Resource, Success } from './inject'
 import { ImplStore } from './'
 
 /**
- * 合并数据源，source$是函数则递归执行，并切换到新的执行分支，
- * 所有的异步操作都需要combineLatest
+ * 合并数据源
  */
 export function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource): Observable<S> {
 
