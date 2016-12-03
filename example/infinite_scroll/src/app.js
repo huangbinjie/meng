@@ -21,14 +21,15 @@ let App = class App extends React.Component {
         };
     }
     render() {
+        console.log(this.props);
         const lis = this.props.lis.map((n, i) => React.createElement("li", { key: i, style: { height: "20px", lineHeight: "20px" } }, n));
         return (React.createElement("div", null,
             React.createElement(react_iscroller_1.default, { onEnd: this.onend }, lis)));
     }
 };
 App = __decorate([
-    _1.inject(api_1.fetchData, (store, state) => {
-        return ({ lis: store["lis"].concat(state) });
+    _1.inject(api_1.fetchData, (state) => {
+        return ({ lis: state });
     }),
     _1.lift({ lis: [], page: 1 }),
     __metadata("design:paramtypes", [])

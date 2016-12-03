@@ -58,7 +58,7 @@
 	const react_dom_1 = __webpack_require__(38);
 	const rxjs_1 = __webpack_require__(168);
 	const _1 = __webpack_require__(509);
-	const api_1 = __webpack_require__(511);
+	const api_1 = __webpack_require__(514);
 	let App = class App extends React.Component {
 	    constructor() {
 	        super(...arguments);
@@ -70,7 +70,8 @@
 	        this.nextPage = () => {
 	            if (this.props.page === 5)
 	                return;
-	            this.props.setState({ page: this.props.page + 1 });
+	            const page = this.props.page + 1;
+	            this.props.setState({ page: page });
 	        };
 	    }
 	    render() {
@@ -84,8 +85,7 @@
 	};
 	App = __decorate([
 	    _1.inject(_1.default, "rootStore"),
-	    _1.inject(() => rxjs_1.Observable.of(1), "c"),
-	    _1.inject(() => 1, "n"),
+	    _1.inject((state) => rxjs_1.Observable.of(1), "c"),
 	    _1.inject(api_1.fetchData, "lis"),
 	    _1.lift({ lis: [], page: 1 }),
 	    __metadata("design:paramtypes", [])
@@ -38562,65 +38562,70 @@
 
 	"use strict";
 	const rxjs_1 = __webpack_require__(168);
-	const react_1 = __webpack_require__(1);
-	const shallowequal_1 = __webpack_require__(510);
 	class ImplStore {
 	    constructor(initialState = {}) {
-	        this.state$ = new rxjs_1.ReplaySubject(1)
-	            .scan((currentState, nextState) => Object.assign(currentState, nextState), {});
+	        this.store$ = rxjs_1.Observable.of({});
+	        this.state$ = new rxjs_1.ReplaySubject(1);
 	        this.children = {};
-	        this.setState = (nextState, callback = () => { }) => {
-	            this.state$.next(Object.assign(nextState, { setState: this.setState, callback }));
+	        this.setState = (nextState) => {
+	            this.state$.next(nextState);
 	        };
 	        this.subscribe = (success, error, complete) => {
 	            return this.store$.subscribe(success, error, complete);
 	        };
-	        this.state$.next(Object.assign({ setState: this.setState, callback: () => { } }, initialState));
+	        this.state$.next(initialState);
 	    }
 	}
 	exports.ImplStore = ImplStore;
-	function createProxy(target) {
-	    return new Proxy(target, {
-	        get(target, name) {
-	            if (name in target)
-	                return target[name];
-	            else
-	                return target.children[name];
-	        }
-	    });
-	}
-	const rootStore = createProxy(new ImplStore());
-	const inject = (source$, success) => (component) => {
-	    component.resource.push({ source$, success });
-	    return component;
-	};
-	exports.inject = inject;
-	const lift = (initialState = {}, initialName) => (component) => {
+	const rootStore = new ImplStore();
+	var lift_1 = __webpack_require__(510);
+	exports.lift = lift_1.lift;
+	var inject_1 = __webpack_require__(513);
+	exports.inject = inject_1.inject;
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = rootStore;
+
+
+/***/ },
+/* 510 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	const react_1 = __webpack_require__(1);
+	const _1 = __webpack_require__(509);
+	const rxjs_1 = __webpack_require__(168);
+	const fork_1 = __webpack_require__(511);
+	const shallowEqualValue_1 = __webpack_require__(512);
+	exports.lift = (initialState = {}, initialName) => (component) => {
 	    const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
 	    return _a = class LiftedComponent extends react_1.Component {
 	            constructor() {
 	                super(...arguments);
 	                this._isMounted = false;
+	                this.state = Object.assign({}, initialState);
 	            }
 	            componentWillUnmount() {
-	                rootStore[displayName] = null;
+	                _1.default.children[displayName] = null;
 	                this._isMounted = false;
 	                this.hasStoreStateChanged = false;
 	                this.subscription.unsubscribe();
 	            }
 	            componentWillReceiveProps(nextProps) {
-	                rootStore[displayName].setState(nextProps);
+	                _1.default.children[displayName].setState(nextProps);
 	            }
 	            componentWillMount() {
-	                const currentStore = new ImplStore(initialState);
-	                rootStore.children[displayName] = currentStore;
-	                currentStore.store$ = currentStore.state$.combineLatest(rxjs_1.Observable.of(this.props), combineLatestSelector);
-	                LiftedComponent.resource.forEach(source => currentStore.store$ = fork(currentStore.store$, source));
+	                const currentStore = new _1.ImplStore(initialState);
+	                _1.default.children[displayName] = currentStore;
+	                const props$ = rxjs_1.Observable.of(this.props);
+	                const fork$ = LiftedComponent.resource.map(source => fork_1.fork.call(this, currentStore.state$, source));
+	                const merge$ = rxjs_1.Observable.from(fork$).mergeAll();
+	                currentStore.store$ = rxjs_1.Observable.merge(currentStore.state$, props$, merge$);
 	                this.subscription = currentStore.store$
-	                    .subscribe(state => {
-	                    if (!shallowequal_1.default(state, this.state)) {
+	                    .map(nextState => Object.assign({}, this.state, nextState))
+	                    .subscribe((state) => {
+	                    if (!shallowEqualValue_1.default(this.state, state)) {
 	                        this.hasStoreStateChanged = true;
-	                        this.setState(state, state.callback);
+	                        this.setState(state);
 	                    }
 	                });
 	            }
@@ -38632,7 +38637,7 @@
 	            }
 	            render() {
 	                this.hasStoreStateChanged = false;
-	                const props = Object.assign({}, initialState, this.state);
+	                const props = Object.assign({ setState: _1.default.children[displayName].setState }, this.state);
 	                return react_1.createElement(component, props);
 	            }
 	        },
@@ -38641,60 +38646,70 @@
 	        _a;
 	    var _a;
 	};
-	exports.lift = lift;
-	function fork(store$, { source$, success }) {
-	    if (source$ instanceof rxjs_1.Observable)
-	        return store$.combineLatest(source$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-	    else if (source$ instanceof Promise)
-	        return store$.combineLatest(rxjs_1.Observable.fromPromise(source$).map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-	    else if (source$ instanceof ImplStore)
-	        return store$.combineLatest(source$.state$.map(source => Object.assign(source, { callback: () => { } })).map(source => typeof success === "string" ? ({ [success]: source }) : success(source)), combineLatestSelector);
-	    else if (source$ instanceof Function && source$.length > 0) {
-	        const merge$ = store$.flatMap(state => fork(store$, { source$: source$(state) || (typeof success === "string" ? state[success] : success(state)), success }).map(state => Object.assign(state, { callback: () => { } })));
-	        return store$.combineLatest(merge$, combineLatestSelector);
-	    }
-	    else if (source$ instanceof Function && source$.length === 0)
-	        return fork(store$, { source$: source$(), success });
-	    else
-	        return store$.map(state => Object.assign(state, typeof success === "string" ? ({ [success]: source$ }) : success(source$)));
-	}
-	const combineLatestSelector = (acc, x) => Object.assign(acc, x);
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = rootStore;
 
 
 /***/ },
-/* 510 */
+/* 511 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	const rxjs_1 = __webpack_require__(168);
+	const _1 = __webpack_require__(509);
+	function fork(state$, { source$, success }) {
+	    if (source$ instanceof rxjs_1.Observable) {
+	        return source$.map(exports.implSelector(success));
+	    }
+	    else if (source$ instanceof Promise) {
+	        return rxjs_1.Observable.fromPromise(source$).map(exports.implSelector(success));
+	    }
+	    else if (source$ instanceof _1.ImplStore)
+	        return source$.store$.map(exports.implSelector(success));
+	    else if (source$ instanceof Function && source$.length > 0)
+	        return state$.flatMap(state => fork(state$, { source$: source$(this.state, state), success }));
+	    else if (source$ instanceof Function && source$.length === 0)
+	        return fork(state$, { source$: source$(this.state, this.state), success });
+	    else
+	        return rxjs_1.Observable.of(source$).map(exports.implSelector(success));
+	}
+	exports.fork = fork;
+	exports.combineLatestSelector = (acc, x) => Object.assign(acc, x);
+	exports.resetCallback = (state) => Object.assign(state, { callback: () => { } });
+	exports.implSelector = (success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(state);
+
+
+/***/ },
+/* 512 */
 /***/ function(module, exports) {
 
 	"use strict";
-	function shallowEqual(objA, objB) {
-	    if (objA === objB) {
-	        return true;
-	    }
-	    if (objA == void 0 || objB == void 0) {
-	        return false;
-	    }
-	    const keysA = Object.keys(objA);
-	    const keysB = Object.keys(objB);
-	    if (keysA.length !== keysB.length) {
-	        return false;
-	    }
+	function shallowEqualValue(source, target) {
+	    const targetKeys = Object.keys(target);
 	    const hasOwn = Object.prototype.hasOwnProperty;
-	    for (let i = 0; i < keysA.length; i++) {
-	        if (!hasOwn.call(objB, keysA[i]) ||
-	            objA[keysA[i]] !== objB[keysA[i]]) {
+	    for (let i = 0; i < targetKeys.length; i++) {
+	        if (!hasOwn.call(source, targetKeys[i]) ||
+	            source[targetKeys[i]] !== target[targetKeys[i]]) {
 	            return false;
 	        }
 	    }
 	    return true;
 	}
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = shallowEqual;
+	exports.default = shallowEqualValue;
 
 
 /***/ },
-/* 511 */
+/* 513 */
+/***/ function(module, exports) {
+
+	"use strict";
+	exports.inject = (source$, success) => (component) => {
+	    component.resource.push({ source$, success });
+	    return component;
+	};
+
+
+/***/ },
+/* 514 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -38703,9 +38718,8 @@
 	const page3 = Array.apply(null, { length: 10 }).map((acc, x) => (3 - 1) * 10 + x + 1);
 	const page4 = Array.apply(null, { length: 10 }).map((acc, x) => (4 - 1) * 10 + x + 1);
 	const page5 = Array.apply(null, { length: 10 }).map((acc, x) => (5 - 1) * 10 + x + 1);
-	exports.fetchData = (state) => new Promise((resolve, reject) => {
-	    console.log(state);
-	    switch (state.page) {
+	exports.fetchData = (currentState, nextState) => new Promise((resolve, reject) => {
+	    switch (nextState.page) {
 	        case 1: resolve(page1);
 	        case 2: resolve(page2);
 	        case 3: resolve(page3);

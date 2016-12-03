@@ -11,8 +11,8 @@ type State = {
 }
 
 @inject(Store, "rootStore")
-@inject(() => Observable.of(1), "c")
-@inject(() => 1, "n")
+
+@inject((state: any) => Observable.of(1), "c")
 @inject(fetchData, "lis")
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, void> {
@@ -36,7 +36,8 @@ class App extends React.Component<any, void> {
 
     private nextPage = () => {
         if (this.props.page === 5) return
-        this.props.setState({ page: this.props.page + 1 })
+        const page = this.props.page + 1
+        this.props.setState({ page: page })
     }
 }
 

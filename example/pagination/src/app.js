@@ -24,7 +24,8 @@ let App = class App extends React.Component {
         this.nextPage = () => {
             if (this.props.page === 5)
                 return;
-            this.props.setState({ page: this.props.page + 1 });
+            const page = this.props.page + 1;
+            this.props.setState({ page: page });
         };
     }
     render() {
@@ -38,8 +39,7 @@ let App = class App extends React.Component {
 };
 App = __decorate([
     _1.inject(_1.default, "rootStore"),
-    _1.inject(() => rxjs_1.Observable.of(1), "c"),
-    _1.inject(() => 1, "n"),
+    _1.inject((state) => rxjs_1.Observable.of(1), "c"),
     _1.inject(api_1.fetchData, "lis"),
     _1.lift({ lis: [], page: 1 }),
     __metadata("design:paramtypes", [])

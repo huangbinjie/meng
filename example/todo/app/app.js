@@ -29,7 +29,7 @@ var App = (function (_super) {
                 var lls = _this.props.list.slice();
                 lls.push({ status: "active", value: event.target.value });
                 event.target.value = "";
-                src_1.default["App"].setState({ list: lls });
+                _this.props.setState({ list: lls });
             }
         };
         _this.toggle = function (data, index) { return function (event) {
@@ -40,24 +40,24 @@ var App = (function (_super) {
                     return { status: "active", value: item.value };
                 return item;
             });
-            _this.setState({ list: items });
+            _this.props.setState({ list: items });
         }; };
         _this.destroy = function (index) { return function () {
             var items = _this.props.list.slice();
             items.splice(index, 1);
-            _this.setState({ list: items });
+            _this.props.setState({ list: items });
         }; };
         _this.clearCompleted = function () {
             var items = _this.props.list.filter(function (item) { return item.status !== "completed"; });
-            _this.setState({ list: items });
+            _this.props.setState({ list: items });
         };
-        _this.show = function (display) { return function () { return _this.setState({ display: display }); }; };
+        _this.show = function (display) { return function () { return _this.props.setState({ display: display }); }; };
         return _this;
     }
     App.prototype.componentDidMount = function () {
-        src_1.default["App"].subscribe(function (state) {
-            console.log(state);
-            localStorage.setItem("meng-todo", JSON.stringify(state));
+        var _this = this;
+        src_1.default.children["App"].subscribe(function (state) {
+            localStorage.setItem("meng-todo", JSON.stringify(Object.assign({}, _this.props, state)));
         });
     };
     App.prototype.render = function () {

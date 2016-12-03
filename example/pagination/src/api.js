@@ -4,9 +4,8 @@ const page2 = Array.apply(null, { length: 10 }).map((acc, x) => (2 - 1) * 10 + x
 const page3 = Array.apply(null, { length: 10 }).map((acc, x) => (3 - 1) * 10 + x + 1);
 const page4 = Array.apply(null, { length: 10 }).map((acc, x) => (4 - 1) * 10 + x + 1);
 const page5 = Array.apply(null, { length: 10 }).map((acc, x) => (5 - 1) * 10 + x + 1);
-exports.fetchData = (state) => new Promise((resolve, reject) => {
-    console.log(state);
-    switch (state.page) {
+exports.fetchData = (currentState, nextState) => new Promise((resolve, reject) => {
+    switch (nextState.page) {
         case 1: resolve(page1);
         case 2: resolve(page2);
         case 3: resolve(page3);

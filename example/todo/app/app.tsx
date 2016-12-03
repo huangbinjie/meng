@@ -6,11 +6,10 @@ import { getByCache } from './app.api'
 
 @inject(getByCache, cache => cache)
 @lift({ list: [], display: "all" })
-class App extends React.Component<any, any> {
+class App extends React.Component<any, void> {
     componentDidMount() {
-        Store["App"].subscribe(state => {
-            console.log(state)
-            localStorage.setItem("meng-todo", JSON.stringify(state))
+        Store.children["App"].subscribe(state => {
+            localStorage.setItem("meng-todo", JSON.stringify(Object.assign({}, this.props, state)))
         })
     }
     render() {
@@ -59,7 +58,7 @@ class App extends React.Component<any, any> {
             const lls = [...this.props.list]
             lls.push({ status: "active", value: event.target.value })
             event.target.value = ""
-            Store["App"].setState({ list: lls })
+            this.props.setState({ list: lls })
         }
     }
     toggle = (data, index) => event => {
@@ -69,18 +68,18 @@ class App extends React.Component<any, any> {
             return item
         })
 
-        this.setState({ list: items })
+        this.props.setState({ list: items })
     }
     destroy = index => () => {
         const items = [...this.props.list]
         items.splice(index, 1)
-        this.setState({ list: items })
+        this.props.setState({ list: items })
     }
     clearCompleted = () => {
         const items = this.props.list.filter(item => item.status !== "completed")
-        this.setState({ list: items })
+        this.props.setState({ list: items })
     }
-    show = display => () => this.setState({ display: display })
+    show = display => () => this.props.setState({ display: display })
 }
 
 const filter = display => li => {

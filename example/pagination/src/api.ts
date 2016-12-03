@@ -9,9 +9,10 @@ const page4 = Array.apply(null, { length: 10 }).map((acc: any, x: number) => (4 
 const page5 = Array.apply(null, { length: 10 }).map((acc: any, x: number) => (5 - 1) * 10 + x + 1)
 
 
-export const fetchData = (state: any): Promise<[number]> => new Promise((resolve, reject) => {
-  console.log(state)
-  switch (state.page) {
+export const fetchData = (currentState: Object, nextState: any): Promise<[number]> => new Promise((resolve, reject) => {
+  // console.log("currentState")
+  // console.log(currentState)
+  switch (nextState.page) {
     case 1: resolve(page1)
     case 2: resolve(page2)
     case 3: resolve(page3)
