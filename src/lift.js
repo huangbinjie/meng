@@ -8,7 +8,7 @@ var react_1 = require("react");
 var _1 = require("./");
 var rxjs_1 = require("rxjs");
 var fork_1 = require("./fork");
-var shallowEqualValue_1 = require("./utils/shallowEqualValue");
+var shallowEqual_1 = require("./utils/shallowEqual");
 exports.lift = function (initialState, initialName) {
     if (initialState === void 0) { initialState = {}; }
     return function (component) {
@@ -41,7 +41,7 @@ exports.lift = function (initialState, initialName) {
                     this.subscription = currentStore.store$
                         .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
                         .subscribe(function (state) {
-                        if (!shallowEqualValue_1.default(_this.state, state)) {
+                        if (!shallowEqual_1.default(_this.state, state)) {
                             _this.hasStoreStateChanged = true;
                             _this.setState(state);
                         }

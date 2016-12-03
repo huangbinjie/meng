@@ -3,7 +3,7 @@ import { Component, ComponentClass, createElement } from 'react'
 import rootStore, { Meng, ImplStore } from './'
 import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
-import shallowEqualValue from './utils/shallowEqualValue'
+import shallowEqual from './utils/shallowEqual'
 
 export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
   const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
@@ -44,7 +44,7 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
       this.subscription = currentStore.store$
         .map(nextState => Object.assign({}, this.state, nextState))
         .subscribe((state: any) => {
-          if (!shallowEqualValue(this.state, state)) {
+          if (!shallowEqual(this.state, state)) {
             this.hasStoreStateChanged = true
             this.setState(state)
           }
