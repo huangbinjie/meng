@@ -50,13 +50,13 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
           }
         })
     }
-    componentDidMount() {
+    public componentDidMount() {
       this._isMounted = true
     }
-    shouldComponentUpdate() {
+    public shouldComponentUpdate() {
       return this.hasStoreStateChanged
     }
-    render() {
+    public render() {
       this.hasStoreStateChanged = false
 
       const props = Object.assign({ setState: rootStore.children[displayName].setState }, <S & P>this.state)
