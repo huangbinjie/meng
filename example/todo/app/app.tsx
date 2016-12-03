@@ -9,7 +9,7 @@ import { getByCache } from './app.api'
 class App extends React.Component<any, void> {
     componentDidMount() {
         Store.children["App"].subscribe(state => {
-            localStorage.setItem("meng-todo", JSON.stringify(Object.assign({}, this.props, state)))
+            localStorage.setItem("meng-todo", JSON.stringify(state))
         })
     }
     render() {

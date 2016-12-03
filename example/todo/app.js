@@ -101,9 +101,8 @@
 	        return _this;
 	    }
 	    App.prototype.componentDidMount = function () {
-	        var _this = this;
 	        src_1.default.children["App"].subscribe(function (state) {
-	            localStorage.setItem("meng-todo", JSON.stringify(Object.assign({}, _this.props, state)));
+	            localStorage.setItem("meng-todo", JSON.stringify(state));
 	        });
 	    };
 	    App.prototype.render = function () {
@@ -39729,7 +39728,7 @@
 	var _1 = __webpack_require__(178);
 	var rxjs_1 = __webpack_require__(179);
 	var fork_1 = __webpack_require__(557);
-	var shallowEqualValue_1 = __webpack_require__(558);
+	var shallowEqual_1 = __webpack_require__(558);
 	exports.lift = function (initialState, initialName) {
 	    if (initialState === void 0) { initialState = {}; }
 	    return function (component) {
@@ -39762,7 +39761,7 @@
 	                    this.subscription = currentStore.store$
 	                        .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
 	                        .subscribe(function (state) {
-	                        if (!shallowEqualValue_1.default(_this.state, state)) {
+	                        if (!shallowEqual_1.default(_this.state, state)) {
 	                            _this.hasStoreStateChanged = true;
 	                            _this.setState(state);
 	                        }
@@ -43875,19 +43874,29 @@
 /***/ function(module, exports) {
 
 	"use strict";
-	function shallowEqualValue(source, target) {
-	    var targetKeys = Object.keys(target);
+	function shallowEqual(objA, objB) {
+	    if (objA === objB) {
+	        return true;
+	    }
+	    if (objA == void 0 || objB == void 0) {
+	        return false;
+	    }
+	    var keysA = Object.keys(objA);
+	    var keysB = Object.keys(objB);
+	    if (keysA.length !== keysB.length) {
+	        return false;
+	    }
 	    var hasOwn = Object.prototype.hasOwnProperty;
-	    for (var i = 0; i < targetKeys.length; i++) {
-	        if (!hasOwn.call(source, targetKeys[i]) ||
-	            source[targetKeys[i]] !== target[targetKeys[i]]) {
+	    for (var i = 0; i < keysA.length; i++) {
+	        if (!hasOwn.call(objB, keysA[i]) ||
+	            objA[keysA[i]] !== objB[keysA[i]]) {
 	            return false;
 	        }
 	    }
 	    return true;
 	}
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = shallowEqualValue;
+	exports.default = shallowEqual;
 
 
 /***/ },

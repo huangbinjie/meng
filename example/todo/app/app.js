@@ -55,9 +55,8 @@ var App = (function (_super) {
         return _this;
     }
     App.prototype.componentDidMount = function () {
-        var _this = this;
         src_1.default.children["App"].subscribe(function (state) {
-            localStorage.setItem("meng-todo", JSON.stringify(Object.assign({}, _this.props, state)));
+            localStorage.setItem("meng-todo", JSON.stringify(state));
         });
     };
     App.prototype.render = function () {
