@@ -1,4 +1,3 @@
-/// <reference path="/usr/local/lib/node_modules/typescript/lib/lib.es6.d.ts" />
 import { ReplaySubject, Observable, Subscription } from 'rxjs'
 import { StatelessComponent, ComponentLifecycle } from 'react'
 import { Resource } from './inject'

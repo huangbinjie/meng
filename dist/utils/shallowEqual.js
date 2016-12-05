@@ -3,6 +3,9 @@ function shallowEqual(objA, objB) {
     if (objA === objB) {
         return true;
     }
+    if (objA == void 0 || objB == void 0) {
+        return false;
+    }
     var keysA = Object.keys(objA);
     var keysB = Object.keys(objB);
     if (keysA.length !== keysB.length) {

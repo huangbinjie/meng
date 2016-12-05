@@ -5,3 +5,4 @@ exports.inject = function (source$, success) {
         return component;
     };
 };
+//# sourceMappingURL=inject.js.map

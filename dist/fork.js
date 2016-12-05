@@ -26,3 +26,4 @@ exports.implSelector = function (success) { return function (state) {
     return typeof success === "string" ? (_a = {}, _a[success] = state, _a) : success(state);
     var _a;
 }; };
+//# sourceMappingURL=fork.js.map

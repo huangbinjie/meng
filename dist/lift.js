@@ -65,3 +65,4 @@ exports.lift = function (initialState, initialName) {
         var _a;
     };
 };
+//# sourceMappingURL=lift.js.map
