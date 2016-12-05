@@ -3,7 +3,7 @@ import { Component, ComponentClass, createElement } from 'react'
 import rootStore, { Meng, ImplStore } from './'
 import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
-import shallowEqual from './utils/shallowEqual'
+import shallowEqualValue from './utils/shallowEqualValue'
 
 export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
   const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
@@ -42,26 +42,29 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
       currentStore.store$ = Observable.merge(currentStore.state$, props$, merge$)
 
       this.subscription = currentStore.store$
+        .filter(nextState => !shallowEqualValue(this.state, nextState))
         .map(nextState => Object.assign({}, this.state, nextState))
-        .subscribe((state: any) => {
-          if (!shallowEqual(this.state, state)) {
-            this.hasStoreStateChanged = true
-            this.setState(state)
-          }
+        .subscribe((state: S) => {
+          this.hasStoreStateChanged = true
+          this.setState(state)
         })
     }
+
     public componentDidMount() {
       this._isMounted = true
     }
+
     public shouldComponentUpdate() {
       return this.hasStoreStateChanged
     }
+
     public render() {
       this.hasStoreStateChanged = false
 
       const props = Object.assign({ setState: rootStore.children[displayName].setState }, <S & P>this.state)
       return createElement(component as ComponentClass<P>, props)
     }
+
   }
   // return ConnectComponent
 }

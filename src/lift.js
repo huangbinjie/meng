@@ -8,7 +8,7 @@ var react_1 = require("react");
 var _1 = require("./");
 var rxjs_1 = require("rxjs");
 var fork_1 = require("./fork");
-var shallowEqual_1 = require("./utils/shallowEqual");
+var shallowEqualValue_1 = require("./utils/shallowEqualValue");
 exports.lift = function (initialState, initialName) {
     if (initialState === void 0) { initialState = {}; }
     return function (component) {
@@ -39,12 +39,11 @@ exports.lift = function (initialState, initialName) {
                     var merge$ = rxjs_1.Observable.from(fork$).mergeAll();
                     currentStore.store$ = rxjs_1.Observable.merge(currentStore.state$, props$, merge$);
                     this.subscription = currentStore.store$
+                        .filter(function (nextState) { return !shallowEqualValue_1.default(_this.state, nextState); })
                         .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
                         .subscribe(function (state) {
-                        if (!shallowEqual_1.default(_this.state, state)) {
-                            _this.hasStoreStateChanged = true;
-                            _this.setState(state);
-                        }
+                        _this.hasStoreStateChanged = true;
+                        _this.setState(state);
                     });
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
