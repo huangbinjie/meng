@@ -50,17 +50,6 @@ export class ImplStore<S> implements Store<S> {
 
 }
 
-// function createProxy<T>(target: Store<T>): Store<T> & { [key: string]: Store<Object> } {
-//     return new Proxy<any>(target, {
-//         get(target, name) {
-//             if (name in target)
-//                 return target[name]
-//             else
-//                 return target.children[name]
-//         }
-//     })
-// }
-
 const rootStore = new ImplStore()
 
 export { lift } from './lift'

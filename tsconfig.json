@@ -9,6 +9,7 @@
     "stripInternal": true,
     "removeComments": true,
     "preserveConstEnums": true,
+    "declaration": true,
     "sourceMap": true,
     "outDir": "./dist",
     "types": [
