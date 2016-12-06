@@ -37,14 +37,17 @@ exports.lift = function (initialState, initialName) {
                     var props$ = rxjs_1.Observable.of(this.props);
                     var fork$ = LiftedComponent.resource.map(function (source) { return fork_1.fork.call(_this, currentStore.state$, source); });
                     var merge$ = rxjs_1.Observable.from(fork$).mergeAll();
-                    currentStore.store$ = rxjs_1.Observable.merge(currentStore.state$, props$, merge$);
-                    this.subscription = currentStore.store$
-                        .filter(function (nextState) { return !shallowEqualValue_1.default(_this.state, nextState); })
-                        .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
-                        .subscribe(function (state) {
-                        _this.hasStoreStateChanged = true;
-                        _this.setState(state);
-                    });
+                    currentStore.store$ =
+                        rxjs_1.Observable
+                            .merge(currentStore.state$, props$, merge$)
+                            .filter(function (nextState) { return !shallowEqualValue_1.default(_this.state, nextState); })
+                            .map(function (nextState) { return Object.assign({}, _this.state, nextState); });
+                    this.subscription =
+                        currentStore.store$
+                            .subscribe(function (state) {
+                            _this.hasStoreStateChanged = true;
+                            _this.setState(state);
+                        });
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
                     this._isMounted = true;
