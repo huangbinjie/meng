@@ -39,15 +39,18 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
 
       const merge$ = Observable.from(fork$).mergeAll()
 
-      currentStore.store$ = Observable.merge(currentStore.state$, props$, merge$)
+      currentStore.store$ =
+        Observable
+          .merge(currentStore.state$, props$, merge$)
+          .filter(nextState => !shallowEqualValue(this.state, nextState))
+          .map(nextState => Object.assign({}, this.state, nextState))
 
-      this.subscription = currentStore.store$
-        .filter(nextState => !shallowEqualValue(this.state, nextState))
-        .map(nextState => Object.assign({}, this.state, nextState))
-        .subscribe((state: S) => {
-          this.hasStoreStateChanged = true
-          this.setState(state)
-        })
+      this.subscription =
+        currentStore.store$
+          .subscribe((state: S) => {
+            this.hasStoreStateChanged = true
+            this.setState(state)
+          })
     }
 
     public componentDidMount() {
