@@ -1,4 +1,3 @@
-/// <reference types="core-js" />
 import { ReplaySubject, Observable, Subscription } from 'rxjs';
 import { StatelessComponent, ComponentLifecycle } from 'react';
 import { Resource } from './inject';
@@ -26,7 +25,7 @@ export declare namespace Meng {
 }
 export declare class ImplStore<S> implements Store<S> {
     constructor(initialState?: S);
-    store$: Observable<{}>;
+    store$: Observable<S>;
     state$: ReplaySubject<{}>;
     children: {
         [key: string]: Store<Object>;

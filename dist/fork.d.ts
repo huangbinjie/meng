@@ -1,4 +1,3 @@
-/// <reference types="core-js" />
 import { Observable, ReplaySubject } from 'rxjs';
 import { Resource, Success } from './inject';
 export declare function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource): Observable<S>;
