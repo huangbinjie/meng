@@ -4,6 +4,7 @@ import Store, { lift, inject } from '../../../src'
 window["Store"] = Store
 import { getByCache } from './app.api'
 
+@inject(Store, "rootStore")
 @inject(getByCache, cache => cache)
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, void> {
@@ -14,7 +15,7 @@ class App extends React.Component<any, void> {
     }
     render() {
         const display = this.props.display
-        console.log(111)
+        console.log(this.props.rootStore)
         const lis = this.props.list.filter(filter(display)).map((li, index) => {
             if (li.status === "active") return <ActiveItem key={index} index={index} data={li} toggle={this.toggle} destroy={this.destroy} />
             if (li.status === "completed") return <CompletedItem key={index} index={index} data={li} toggle={this.toggle} destroy={this.destroy} />

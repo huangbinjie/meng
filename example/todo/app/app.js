@@ -62,7 +62,7 @@ var App = (function (_super) {
     App.prototype.render = function () {
         var _this = this;
         var display = this.props.display;
-        console.log(111);
+        console.log(this.props.rootStore);
         var lis = this.props.list.filter(filter(display)).map(function (li, index) {
             if (li.status === "active")
                 return React.createElement(ActiveItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
@@ -93,6 +93,7 @@ var App = (function (_super) {
     return App;
 }(React.Component));
 App = __decorate([
+    src_1.inject(src_1.default, "rootStore"),
     src_1.inject(app_api_1.getByCache, function (cache) { return cache; }),
     src_1.lift({ list: [], display: "all" }),
     __metadata("design:paramtypes", [])
