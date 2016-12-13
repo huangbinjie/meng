@@ -27,6 +27,9 @@ export function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource):
     else if (source$ instanceof Function && source$.length === 0)
         return fork(state$, { source$: source$(this.state, this.state), success })
 
+    else if (source$ == void 0)
+        return Observable.never()
+
     else
         return Observable.of(source$).map(implSelector(success))
 }
