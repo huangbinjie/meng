@@ -2,6 +2,12 @@
 
 一个声明式的数据源管理库
 
+## 安装
+
+```js
+npm i meng --save
+```
+
 ## 灵感
 
 总所周知，react是一个侧重同步数据到dom的库，也就是`(data) => dom`. 这里的data包含了`props`和`state`，但是其他的数据源不好管理，比如说api。
