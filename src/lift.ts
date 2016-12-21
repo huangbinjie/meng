@@ -5,7 +5,7 @@ import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
 import shallowEqualValue from './utils/shallowEqualValue'
 
-export const lift = <P, S extends { callback: () => void }>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
+export const lift = <P, S extends { setState: any, callback: () => void }>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
   const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
   return class LiftedComponent extends Component<P, S> {
     static displayName = `Meng(${displayName})`
@@ -53,6 +53,7 @@ export const lift = <P, S extends { callback: () => void }>(initialState = <S>{}
             delete state.callback
           })
 
+      this.setState(<S>{ setState: currentStore.setState })
     }
 
     public componentDidMount() {
