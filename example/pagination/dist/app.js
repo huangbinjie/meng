@@ -38561,24 +38561,31 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	var __assign = (this && this.__assign) || Object.assign || function(t) {
+	    for (var s, i = 1, n = arguments.length; i < n; i++) {
+	        s = arguments[i];
+	        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+	            t[p] = s[p];
+	    }
+	    return t;
+	};
 	const rxjs_1 = __webpack_require__(168);
+	const shallowEqualValue_1 = __webpack_require__(510);
 	class ImplStore {
 	    constructor(initialState = {}) {
-	        this.store$ = rxjs_1.Observable.of({});
 	        this.state$ = new rxjs_1.ReplaySubject(1);
 	        this.children = {};
-	        this.setState = (nextState) => {
-	            this.state$.next(nextState);
-	        };
+	        this.setState = (nextState, callback = () => { }) => this.state$.next(__assign({}, nextState, { callback }));
 	        this.subscribe = (success, error, complete) => {
 	            return this.store$.subscribe(success, error, complete);
 	        };
 	        this.state$.next(initialState);
+	        this.store$ = this.state$.distinctUntilChanged(shallowEqualValue_1.default).scan((acc, x) => (__assign({}, acc, x)));
 	    }
 	}
 	exports.ImplStore = ImplStore;
 	const rootStore = new ImplStore();
-	var lift_1 = __webpack_require__(510);
+	var lift_1 = __webpack_require__(511);
 	exports.lift = lift_1.lift;
 	var inject_1 = __webpack_require__(513);
 	exports.inject = inject_1.inject;
@@ -38588,21 +38595,43 @@
 
 /***/ },
 /* 510 */
+/***/ function(module, exports) {
+
+	"use strict";
+	function shallowEqualValue(source, target) {
+	    const targetKeys = Object.keys(target);
+	    if (targetKeys.length === 0)
+	        return true;
+	    const hasOwn = Object.prototype.hasOwnProperty;
+	    for (let i = 0; i < targetKeys.length; i++) {
+	        if (!hasOwn.call(source, targetKeys[i]) ||
+	            source[targetKeys[i]] !== target[targetKeys[i]]) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = shallowEqualValue;
+
+
+/***/ },
+/* 511 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	const react_1 = __webpack_require__(1);
 	const _1 = __webpack_require__(509);
 	const rxjs_1 = __webpack_require__(168);
-	const fork_1 = __webpack_require__(511);
-	const shallowEqualValue_1 = __webpack_require__(512);
+	const fork_1 = __webpack_require__(512);
+	const shallowEqualValue_1 = __webpack_require__(510);
 	exports.lift = (initialState = {}, initialName) => (component) => {
 	    const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
 	    return _a = class LiftedComponent extends react_1.Component {
 	            constructor() {
 	                super(...arguments);
 	                this._isMounted = false;
-	                this.state = Object.assign({}, initialState);
+	                this.state = Object.assign({ callback: () => { } }, initialState);
 	            }
 	            componentWillUnmount() {
 	                _1.default.children[displayName] = null;
@@ -38619,15 +38648,19 @@
 	                const props$ = rxjs_1.Observable.of(this.props);
 	                const fork$ = LiftedComponent.resource.map(source => fork_1.fork.call(this, currentStore.state$, source));
 	                const merge$ = rxjs_1.Observable.from(fork$).mergeAll();
-	                currentStore.store$ = rxjs_1.Observable.merge(currentStore.state$, props$, merge$);
-	                this.subscription = currentStore.store$
-	                    .map(nextState => Object.assign({}, this.state, nextState))
-	                    .subscribe((state) => {
-	                    if (!shallowEqualValue_1.default(this.state, state)) {
+	                currentStore.store$ =
+	                    rxjs_1.Observable
+	                        .merge(currentStore.state$, props$, merge$)
+	                        .filter(nextState => !shallowEqualValue_1.default(this.state, nextState))
+	                        .map(nextState => Object.assign({}, this.state, nextState));
+	                this.subscription =
+	                    currentStore.store$
+	                        .subscribe((state) => {
 	                        this.hasStoreStateChanged = true;
-	                        this.setState(state);
-	                    }
-	                });
+	                        this.setState(state, state.callback);
+	                        delete state.callback;
+	                    });
+	                this.setState({ setState: currentStore.setState });
 	            }
 	            componentDidMount() {
 	                this._isMounted = true;
@@ -38637,8 +38670,7 @@
 	            }
 	            render() {
 	                this.hasStoreStateChanged = false;
-	                const props = Object.assign({ setState: _1.default.children[displayName].setState }, this.state);
-	                return react_1.createElement(component, props);
+	                return react_1.createElement(component, this.state);
 	            }
 	        },
 	        _a.displayName = `Meng(${displayName})`,
@@ -38649,7 +38681,7 @@
 
 
 /***/ },
-/* 511 */
+/* 512 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -38668,6 +38700,8 @@
 	        return state$.flatMap(state => fork(state$, { source$: source$(this.state, state), success }));
 	    else if (source$ instanceof Function && source$.length === 0)
 	        return fork(state$, { source$: source$(this.state, this.state), success });
+	    else if (source$ == void 0)
+	        return rxjs_1.Observable.never();
 	    else
 	        return rxjs_1.Observable.of(source$).map(exports.implSelector(success));
 	}
@@ -38675,26 +38709,6 @@
 	exports.combineLatestSelector = (acc, x) => Object.assign(acc, x);
 	exports.resetCallback = (state) => Object.assign(state, { callback: () => { } });
 	exports.implSelector = (success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(state);
-
-
-/***/ },
-/* 512 */
-/***/ function(module, exports) {
-
-	"use strict";
-	function shallowEqualValue(source, target) {
-	    const targetKeys = Object.keys(target);
-	    const hasOwn = Object.prototype.hasOwnProperty;
-	    for (let i = 0; i < targetKeys.length; i++) {
-	        if (!hasOwn.call(source, targetKeys[i]) ||
-	            source[targetKeys[i]] !== target[targetKeys[i]]) {
-	            return false;
-	        }
-	    }
-	    return true;
-	}
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = shallowEqualValue;
 
 
 /***/ },
