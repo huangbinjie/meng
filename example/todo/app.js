@@ -21599,8 +21599,9 @@
 	        var _this = this;
 	        this.state$ = new rxjs_1.ReplaySubject(1);
 	        this.children = {};
-	        this.setState = function (nextState) {
-	            _this.state$.next(nextState);
+	        this.setState = function (nextState, callback) {
+	            if (callback === void 0) { callback = function () { }; }
+	            return _this.state$.next(__assign({}, nextState, { callback: callback }));
 	        };
 	        this.subscribe = function (success, error, complete) {
 	            return _this.store$.subscribe(success, error, complete);
@@ -39770,7 +39771,7 @@
 	                function LiftedComponent() {
 	                    var _this = _super.apply(this, arguments) || this;
 	                    _this._isMounted = false;
-	                    _this.state = Object.assign({}, initialState);
+	                    _this.state = Object.assign({ callback: function () { } }, initialState);
 	                    return _this;
 	                }
 	                LiftedComponent.prototype.componentWillUnmount = function () {
@@ -39798,8 +39799,10 @@
 	                        currentStore.store$
 	                            .subscribe(function (state) {
 	                            _this.hasStoreStateChanged = true;
-	                            _this.setState(state);
+	                            _this.setState(state, state.callback);
+	                            delete state.callback;
 	                        });
+	                    this.setState({ setState: currentStore.setState });
 	                };
 	                LiftedComponent.prototype.componentDidMount = function () {
 	                    this._isMounted = true;
@@ -39809,8 +39812,7 @@
 	                };
 	                LiftedComponent.prototype.render = function () {
 	                    this.hasStoreStateChanged = false;
-	                    var props = Object.assign({ setState: _1.default.children[displayName].setState }, this.state);
-	                    return react_1.createElement(component, props);
+	                    return react_1.createElement(component, this.state);
 	                };
 	                return LiftedComponent;
 	            }(react_1.Component)),
@@ -43879,18 +43881,18 @@
 	function fork(state$, _a) {
 	    var _this = this;
 	    var source$ = _a.source$, success = _a.success;
-	    if (source$ instanceof rxjs_1.Observable) {
+	    if (source$ instanceof rxjs_1.Observable)
 	        return source$.map(exports.implSelector(success));
-	    }
-	    else if (source$ instanceof Promise) {
+	    else if (source$ instanceof Promise)
 	        return rxjs_1.Observable.fromPromise(source$).map(exports.implSelector(success));
-	    }
 	    else if (source$ instanceof _1.ImplStore)
 	        return source$.store$.map(exports.implSelector(success));
 	    else if (source$ instanceof Function && source$.length > 0)
 	        return state$.flatMap(function (state) { return fork(state$, { source$: source$(_this.state, state), success: success }); });
 	    else if (source$ instanceof Function && source$.length === 0)
 	        return fork(state$, { source$: source$(this.state, this.state), success: success });
+	    else if (source$ == void 0)
+	        return rxjs_1.Observable.never();
 	    else
 	        return rxjs_1.Observable.of(source$).map(exports.implSelector(success));
 	}
