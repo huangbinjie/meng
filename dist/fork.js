@@ -4,12 +4,10 @@ var _1 = require("./");
 function fork(state$, _a) {
     var _this = this;
     var source$ = _a.source$, success = _a.success;
-    if (source$ instanceof rxjs_1.Observable) {
+    if (source$ instanceof rxjs_1.Observable)
         return source$.map(exports.implSelector(success));
-    }
-    else if (source$ instanceof Promise) {
+    else if (source$ instanceof Promise)
         return rxjs_1.Observable.fromPromise(source$).map(exports.implSelector(success));
-    }
     else if (source$ instanceof _1.ImplStore)
         return source$.store$.map(exports.implSelector(success));
     else if (source$ instanceof Function && source$.length > 0)
