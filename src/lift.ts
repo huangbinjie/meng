@@ -5,16 +5,21 @@ import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
 import shallowEqualValue from './utils/shallowEqualValue'
 
-export const lift = <P, S extends { setState: any, callback: () => void }>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
+export type State = {
+  setState: (nextState: Object, callback?: () => void) => void
+  callback: () => void
+}
+
+export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
   const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
-  return class LiftedComponent extends Component<P, S> {
+  return class LiftedComponent extends Component<P, T> {
     static displayName = `Meng(${displayName})`
     static resource: Resource[] = []
     private hasStoreStateChanged: boolean
     private _isMounted = false
     private subscription: Subscription
 
-    public state = Object.assign({ callback: () => { } }, initialState)
+    public state = Object.assign(<T>{ callback: () => { } }, initialState)
 
     public componentWillUnmount() {
       rootStore.children[displayName] = null
@@ -47,13 +52,13 @@ export const lift = <P, S extends { setState: any, callback: () => void }>(initi
 
       this.subscription =
         currentStore.store$
-          .subscribe((state: S) => {
+          .subscribe((state: T) => {
             this.hasStoreStateChanged = true
             this.setState(state, state.callback)
             delete state.callback
           })
 
-      this.setState(<S>{ setState: currentStore.setState })
+      this.setState(<T>{ setState: currentStore.setState })
     }
 
     public componentDidMount() {
@@ -67,7 +72,7 @@ export const lift = <P, S extends { setState: any, callback: () => void }>(initi
     public render() {
       this.hasStoreStateChanged = false
 
-      return createElement(component as ComponentClass<P>, <S & P>this.state)
+      return createElement(component as ComponentClass<P>, <T & P>this.state)
     }
 
   }

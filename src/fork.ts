@@ -8,13 +8,13 @@ import { ImplStore } from './'
 export function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource): Observable<S> {
 
     // stream
-    if (source$ instanceof Observable) {
+    if (source$ instanceof Observable)
         return source$.map(implSelector(success))
-    }
+
     // Promise
-    else if (source$ instanceof Promise) {
+    else if (source$ instanceof Promise)
         return Observable.fromPromise(source$).map(implSelector(success))
-    }
+
     // Store
     else if (source$ instanceof ImplStore)
         return source$.store$.map(implSelector(success))
@@ -27,6 +27,7 @@ export function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource):
     else if (source$ instanceof Function && source$.length === 0)
         return fork(state$, { source$: source$(this.state, this.state), success })
 
+    //函数数据源有可能返回undefined
     else if (source$ == void 0)
         return Observable.never()
 
