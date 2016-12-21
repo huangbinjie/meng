@@ -7,7 +7,7 @@ export interface Store<S> {
     state$: ReplaySubject<S>
     store$: Observable<S>
     children: { [key: string]: Store<Object> }
-    setState: Function,
+    setState: (nextState: S, callback?: () => void) => void,
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
 }
 
@@ -42,9 +42,7 @@ export class ImplStore<S> implements Store<S> {
 
     public children: { [key: string]: Store<Object> } = {}
 
-    public setState = (nextState: S) => {
-        this.state$.next(nextState)
-    }
+    public setState = (nextState: Object, callback = () => { }) => this.state$.next({ ...nextState, callback })
 
     public subscribe = (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => {
         return this.store$.subscribe(success, error, complete)

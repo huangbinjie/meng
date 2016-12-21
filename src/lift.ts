@@ -5,7 +5,7 @@ import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
 import shallowEqualValue from './utils/shallowEqualValue'
 
-export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
+export const lift = <P, S extends { callback: () => void }>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
   const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
   return class LiftedComponent extends Component<P, S> {
     static displayName = `Meng(${displayName})`
@@ -14,7 +14,7 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
     private _isMounted = false
     private subscription: Subscription
 
-    public state = Object.assign({}, initialState)
+    public state = Object.assign({ callback: () => { } }, initialState)
 
     public componentWillUnmount() {
       rootStore.children[displayName] = null
@@ -49,8 +49,10 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
         currentStore.store$
           .subscribe((state: S) => {
             this.hasStoreStateChanged = true
-            this.setState(state)
+            this.setState(state, state.callback)
+            delete state.callback
           })
+
     }
 
     public componentDidMount() {
@@ -64,8 +66,7 @@ export const lift = <P, S>(initialState = <S>{}, initialName?: string) => (compo
     public render() {
       this.hasStoreStateChanged = false
 
-      const props = Object.assign({ setState: rootStore.children[displayName].setState }, <S & P>this.state)
-      return createElement(component as ComponentClass<P>, props)
+      return createElement(component as ComponentClass<P>, <S & P>this.state)
     }
 
   }
