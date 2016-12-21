@@ -15,8 +15,9 @@ var ImplStore = (function () {
         var _this = this;
         this.state$ = new rxjs_1.ReplaySubject(1);
         this.children = {};
-        this.setState = function (nextState) {
-            _this.state$.next(nextState);
+        this.setState = function (nextState, callback) {
+            if (callback === void 0) { callback = function () { }; }
+            return _this.state$.next(__assign({}, nextState, { callback: callback }));
         };
         this.subscribe = function (success, error, complete) {
             return _this.store$.subscribe(success, error, complete);

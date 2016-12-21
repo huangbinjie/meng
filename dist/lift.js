@@ -18,7 +18,7 @@ exports.lift = function (initialState, initialName) {
                 function LiftedComponent() {
                     var _this = _super.apply(this, arguments) || this;
                     _this._isMounted = false;
-                    _this.state = Object.assign({}, initialState);
+                    _this.state = Object.assign({ callback: function () { } }, initialState);
                     return _this;
                 }
                 LiftedComponent.prototype.componentWillUnmount = function () {
@@ -46,8 +46,10 @@ exports.lift = function (initialState, initialName) {
                         currentStore.store$
                             .subscribe(function (state) {
                             _this.hasStoreStateChanged = true;
-                            _this.setState(state);
+                            _this.setState(state, state.callback);
+                            delete state.callback;
                         });
+                    this.setState({ setState: currentStore.setState });
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
                     this._isMounted = true;
@@ -57,8 +59,7 @@ exports.lift = function (initialState, initialName) {
                 };
                 LiftedComponent.prototype.render = function () {
                     this.hasStoreStateChanged = false;
-                    var props = Object.assign({ setState: _1.default.children[displayName].setState }, this.state);
-                    return react_1.createElement(component, props);
+                    return react_1.createElement(component, this.state);
                 };
                 return LiftedComponent;
             }(react_1.Component)),

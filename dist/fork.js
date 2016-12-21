@@ -16,6 +16,8 @@ function fork(state$, _a) {
         return state$.flatMap(function (state) { return fork(state$, { source$: source$(_this.state, state), success: success }); });
     else if (source$ instanceof Function && source$.length === 0)
         return fork(state$, { source$: source$(this.state, this.state), success: success });
+    else if (source$ == void 0)
+        return rxjs_1.Observable.never();
     else
         return rxjs_1.Observable.of(source$).map(exports.implSelector(success));
 }

@@ -7,7 +7,7 @@ export interface Store<S> {
     children: {
         [key: string]: Store<Object>;
     };
-    setState: Function;
+    setState: (nextState: S, callback?: () => void) => void;
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription;
 }
 export declare namespace Meng {
@@ -30,7 +30,7 @@ export declare class ImplStore<S> implements Store<S> {
     children: {
         [key: string]: Store<Object>;
     };
-    setState: (nextState: S) => void;
+    setState: (nextState: Object, callback?: () => void) => void;
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription;
 }
 declare const rootStore: ImplStore<{}>;
