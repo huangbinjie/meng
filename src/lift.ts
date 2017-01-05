@@ -15,30 +15,21 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
   return class LiftedComponent extends Component<P, T> {
     static displayName = `Meng(${displayName})`
     static resource: Resource[] = []
-    private hasStoreStateChanged: boolean
-    private _isMounted = false
+    private hasStoreStateChanged = true
     private subscription: Subscription
 
     public state = Object.assign(<T>{ callback: () => { } }, initialState)
 
-    public componentWillUnmount() {
-      rootStore.children[displayName] = null
-      this._isMounted = false
-      this.hasStoreStateChanged = false
-      this.subscription.unsubscribe()
-    }
-
-    public componentWillReceiveProps(nextProps: P) {
-      rootStore.children[displayName].setState(nextProps)
-    }
-
-    public componentWillMount() {
+    public constructor(props: P) {
+      super(props)
+      // 初始化state，并且和并props到state
+      this.state = Object.assign(<T>{ callback: () => { } }, initialState, props)
       //创建自己的store
       const currentStore = new ImplStore(initialState)
       //把自己的store挂在全局store里面
       rootStore.children[displayName] = currentStore
 
-      const props$ = Observable.of(this.props)
+      const props$ = Observable.of(props)
 
       const fork$ = LiftedComponent.resource.map(source => fork.call(this, currentStore.state$, source))
 
@@ -50,19 +41,33 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
           .filter(nextState => !shallowEqualValue(this.state, nextState))
           .map(nextState => Object.assign({}, this.state, nextState))
 
+      //等currentStore生成之后才能给state的setState赋值
+      this.state.setState = currentStore.setState
+    }
+
+    public componentWillUnmount() {
+      rootStore.children[displayName] = null
+      this.hasStoreStateChanged = false
+      this.subscription.unsubscribe()
+    }
+
+    public componentWillReceiveProps(nextProps: P) {
+      rootStore.children[displayName].setState(nextProps)
+    }
+
+    /**
+     * 因为一方面willMount在Fiber出来之后会有优化，不断的调用和暂停，不适合在willMount写副作用，
+     * 另一方面willMount是ssr中唯一调用的生命周期函数，而willunmount不会调用，会导致内存泄漏，
+     * 所以在didmount监听和订阅
+     */
+    public componentDidMount() {
       this.subscription =
-        currentStore.store$
+        rootStore.children[displayName].store$
           .subscribe((state: T) => {
             this.hasStoreStateChanged = true
             this.setState(state, state.callback)
             delete state.callback
           })
-
-      this.setState(<T>{ setState: currentStore.setState })
-    }
-
-    public componentDidMount() {
-      this._isMounted = true
     }
 
     public shouldComponentUpdate() {

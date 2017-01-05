@@ -39768,26 +39768,14 @@
 	        var displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
 	        return _a = (function (_super) {
 	                __extends(LiftedComponent, _super);
-	                function LiftedComponent() {
-	                    var _this = _super.apply(this, arguments) || this;
-	                    _this._isMounted = false;
+	                function LiftedComponent(props) {
+	                    var _this = _super.call(this, props) || this;
+	                    _this.hasStoreStateChanged = true;
 	                    _this.state = Object.assign({ callback: function () { } }, initialState);
-	                    return _this;
-	                }
-	                LiftedComponent.prototype.componentWillUnmount = function () {
-	                    _1.default.children[displayName] = null;
-	                    this._isMounted = false;
-	                    this.hasStoreStateChanged = false;
-	                    this.subscription.unsubscribe();
-	                };
-	                LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
-	                    _1.default.children[displayName].setState(nextProps);
-	                };
-	                LiftedComponent.prototype.componentWillMount = function () {
-	                    var _this = this;
+	                    _this.state = Object.assign({ callback: function () { } }, initialState, props);
 	                    var currentStore = new _1.ImplStore(initialState);
 	                    _1.default.children[displayName] = currentStore;
-	                    var props$ = rxjs_1.Observable.of(this.props);
+	                    var props$ = rxjs_1.Observable.of(props);
 	                    var fork$ = LiftedComponent.resource.map(function (source) { return fork_1.fork.call(_this, currentStore.state$, source); });
 	                    var merge$ = rxjs_1.Observable.from(fork$).mergeAll();
 	                    currentStore.store$ =
@@ -39795,17 +39783,26 @@
 	                            .merge(currentStore.state$, props$, merge$)
 	                            .filter(function (nextState) { return !shallowEqualValue_1.default(_this.state, nextState); })
 	                            .map(function (nextState) { return Object.assign({}, _this.state, nextState); });
+	                    _this.state.setState = currentStore.setState;
+	                    return _this;
+	                }
+	                LiftedComponent.prototype.componentWillUnmount = function () {
+	                    _1.default.children[displayName] = null;
+	                    this.hasStoreStateChanged = false;
+	                    this.subscription.unsubscribe();
+	                };
+	                LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
+	                    _1.default.children[displayName].setState(nextProps);
+	                };
+	                LiftedComponent.prototype.componentDidMount = function () {
+	                    var _this = this;
 	                    this.subscription =
-	                        currentStore.store$
+	                        _1.default.children[displayName].store$
 	                            .subscribe(function (state) {
 	                            _this.hasStoreStateChanged = true;
 	                            _this.setState(state, state.callback);
 	                            delete state.callback;
 	                        });
-	                    this.setState({ setState: currentStore.setState });
-	                };
-	                LiftedComponent.prototype.componentDidMount = function () {
-	                    this._isMounted = true;
 	                };
 	                LiftedComponent.prototype.shouldComponentUpdate = function () {
 	                    return this.hasStoreStateChanged;
