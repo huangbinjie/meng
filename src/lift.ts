@@ -57,7 +57,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
     /**
      * 因为一方面willMount在Fiber出来之后会有优化，不断的调用和暂停，不适合在willMount写副作用，
-     * 另一方面willMount是ssr中唯一调用的生命周期函数，而willunmount不会调用，会导致内存泄漏，
+     * 另一方面willMount是ssr中唯一调用的生命周期函数，而willunmount和didmount不会调用，会导致内存泄漏，
      * 所以在didmount监听和订阅
      */
     public componentDidMount() {
