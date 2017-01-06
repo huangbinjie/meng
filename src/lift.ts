@@ -3,11 +3,11 @@ import { Component, ComponentClass, createElement } from 'react'
 import rootStore, { Meng, ImplStore } from './'
 import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
-import shallowEqualValue from './utils/shallowEqualValue'
+import shallowEqual from './utils/shallowEqual'
 
 export type State = {
   setState: (nextState: Object, callback?: () => void) => void
-  callback: () => void
+  callback?: () => void
 }
 
 export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
@@ -18,16 +18,16 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
     private hasStoreStateChanged = true
     private subscription: Subscription
 
-    public state = Object.assign(<T>{ callback: () => { } }, initialState)
-
     public constructor(props: P) {
       super(props)
       // 初始化state，并且和并props到state
-      this.state = Object.assign(<T>{ callback: () => { } }, initialState, props)
+      this.state = Object.assign(<T>{}, initialState, props)
       //创建自己的store
-      const currentStore = new ImplStore(this.state)
+      const currentStore = new ImplStore()
       //把自己的store挂在全局store里面
       rootStore.children[displayName] = currentStore
+
+      const props$ = Observable.of(props)
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -39,7 +39,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
       const store$ =
         Observable
-          .merge(currentStore.state$, asyncResource$)
+          .merge(currentStore.state$, props$, asyncResource$)
           .map(nextState => Object.assign({}, this.state, nextState))
           .publishReplay(2)
           .refCount()
@@ -75,10 +75,12 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
       const currentStore = rootStore.children[displayName]
       this.subscription =
         currentStore.store$
+          .filter(store => !shallowEqual(this.state, store))
           .subscribe((state: T) => {
             this.hasStoreStateChanged = true
-            this.setState(state, state.callback)
+            const callback = state.callback || (() => { })
             delete state.callback
+            this.setState(state, callback)
           })
     }
 
