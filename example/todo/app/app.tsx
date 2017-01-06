@@ -4,18 +4,25 @@ import Store, { lift, inject } from '../../../src'
 window["Store"] = Store
 import { getByCache } from './app.api'
 
-@inject(Store, "rootStore")
-@inject(getByCache, cache => cache)
+@inject((currentStore, nextStore) => {
+    // console.log(currentStore)
+    // console.log(nextStore)
+    if (nextStore.p1 && nextStore.p1 !== currentStore.p1)
+        return Promise.resolve(nextStore.p1 + 2)
+}, "p2")
+@inject(() => Promise.resolve(1), "p1")
+// @inject(Store, "rootStore")
+@inject(getByCache, cache => cache === null ? {} : cache)
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, void> {
     componentDidMount() {
-        Store.children["App"].subscribe(state => {
-            localStorage.setItem("meng-todo", JSON.stringify(state))
+        Store.children["App"].subscribe(store => {
+            localStorage.setItem("meng-todo", JSON.stringify(store))
         })
     }
     render() {
         const display = this.props.display
-        console.log(this.props.rootStore)
+        console.log(this.props)
         const lis = this.props.list.filter(filter(display)).map((li, index) => {
             if (li.status === "active") return <ActiveItem key={index} index={index} data={li} toggle={this.toggle} destroy={this.destroy} />
             if (li.status === "completed") return <CompletedItem key={index} index={index} data={li} toggle={this.toggle} destroy={this.destroy} />

@@ -101,14 +101,14 @@
 	        return _this;
 	    }
 	    App.prototype.componentDidMount = function () {
-	        src_1.default.children["App"].subscribe(function (state) {
-	            localStorage.setItem("meng-todo", JSON.stringify(state));
+	        src_1.default.children["App"].subscribe(function (store) {
+	            localStorage.setItem("meng-todo", JSON.stringify(store));
 	        });
 	    };
 	    App.prototype.render = function () {
 	        var _this = this;
 	        var display = this.props.display;
-	        console.log(this.props.rootStore);
+	        console.log(this.props);
 	        var lis = this.props.list.filter(filter(display)).map(function (li, index) {
 	            if (li.status === "active")
 	                return React.createElement(ActiveItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
@@ -139,8 +139,12 @@
 	    return App;
 	}(React.Component));
 	App = __decorate([
-	    src_1.inject(src_1.default, "rootStore"),
-	    src_1.inject(app_api_1.getByCache, function (cache) { return cache; }),
+	    src_1.inject(function (currentStore, nextStore) {
+	        if (nextStore.p1 && nextStore.p1 !== currentStore.p1)
+	            return Promise.resolve(nextStore.p1 + 2);
+	    }, "p2"),
+	    src_1.inject(function () { return Promise.resolve(1); }, "p1"),
+	    src_1.inject(app_api_1.getByCache, function (cache) { return cache === null ? {} : cache; }),
 	    src_1.lift({ list: [], display: "all" }),
 	    __metadata("design:paramtypes", [])
 	], App);
@@ -39761,7 +39765,6 @@
 	var _1 = __webpack_require__(178);
 	var rxjs_1 = __webpack_require__(179);
 	var fork_1 = __webpack_require__(558);
-	var shallowEqualValue_1 = __webpack_require__(520);
 	exports.lift = function (initialState, initialName) {
 	    if (initialState === void 0) { initialState = {}; }
 	    return function (component) {
@@ -39773,16 +39776,21 @@
 	                    _this.hasStoreStateChanged = true;
 	                    _this.state = Object.assign({ callback: function () { } }, initialState);
 	                    _this.state = Object.assign({ callback: function () { } }, initialState, props);
-	                    var currentStore = new _1.ImplStore(initialState);
+	                    var currentStore = new _1.ImplStore(_this.state);
 	                    _1.default.children[displayName] = currentStore;
-	                    var props$ = rxjs_1.Observable.of(props);
-	                    var fork$ = LiftedComponent.resource.map(function (source) { return fork_1.fork.call(_this, currentStore.state$, source); });
-	                    var merge$ = rxjs_1.Observable.from(fork$).mergeAll();
-	                    currentStore.store$ =
-	                        rxjs_1.Observable
-	                            .merge(currentStore.state$, props$, merge$)
-	                            .filter(function (nextState) { return !shallowEqualValue_1.default(_this.state, nextState); })
-	                            .map(function (nextState) { return Object.assign({}, _this.state, nextState); });
+	                    var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
+	                    var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
+	                    var asyncResource = parts[1].map(function (source) { return fork_1.fork(source); });
+	                    var asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
+	                    var store$ = rxjs_1.Observable
+	                        .merge(currentStore.state$, asyncResource$)
+	                        .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
+	                        .publishReplay(2)
+	                        .refCount()
+	                        .pairwise();
+	                    var listenResource = parts[0].map(function (source) { return fork_1.fork.call(_this, source, store$); });
+	                    var listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
+	                    currentStore.store$ = rxjs_1.Observable.merge(store$.map(function (pairstore) { return pairstore[1]; }), listenResource$);
 	                    _this.state.setState = currentStore.setState;
 	                    return _this;
 	                }
@@ -39796,8 +39804,9 @@
 	                };
 	                LiftedComponent.prototype.componentDidMount = function () {
 	                    var _this = this;
+	                    var currentStore = _1.default.children[displayName];
 	                    this.subscription =
-	                        _1.default.children[displayName].store$
+	                        currentStore.store$
 	                            .subscribe(function (state) {
 	                            _this.hasStoreStateChanged = true;
 	                            _this.setState(state, state.callback);
@@ -43873,9 +43882,17 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	var __assign = (this && this.__assign) || Object.assign || function(t) {
+	    for (var s, i = 1, n = arguments.length; i < n; i++) {
+	        s = arguments[i];
+	        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+	            t[p] = s[p];
+	    }
+	    return t;
+	};
 	var rxjs_1 = __webpack_require__(179);
 	var _1 = __webpack_require__(178);
-	function fork(state$, _a) {
+	function fork(_a, store$) {
 	    var _this = this;
 	    var source$ = _a.source$, success = _a.success;
 	    if (source$ instanceof rxjs_1.Observable)
@@ -43885,9 +43902,11 @@
 	    else if (source$ instanceof _1.ImplStore)
 	        return source$.store$.map(exports.implSelector(success));
 	    else if (source$ instanceof Function && source$.length > 0)
-	        return state$.flatMap(function (state) { return fork(state$, { source$: source$(_this.state, state), success: success }); });
+	        return store$
+	            .flatMap(function (pairstore) { return fork({ source$: source$(pairstore[0], pairstore[1]), success: success }, store$); })
+	            .map(function (nextState) { return (__assign({}, _this.state, nextState)); });
 	    else if (source$ instanceof Function && source$.length === 0)
-	        return fork(state$, { source$: source$(this.state, this.state), success: success });
+	        return fork({ source$: source$(this.state, this.state), success: success }, store$);
 	    else if (source$ == void 0)
 	        return rxjs_1.Observable.never();
 	    else
@@ -43900,6 +43919,7 @@
 	    return typeof success === "string" ? (_a = {}, _a[success] = state, _a) : success(state);
 	    var _a;
 	}; };
+	exports.nullCheck = function (state) { return state != void 0; };
 
 
 /***/ },

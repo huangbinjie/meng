@@ -55,14 +55,14 @@ var App = (function (_super) {
         return _this;
     }
     App.prototype.componentDidMount = function () {
-        src_1.default.children["App"].subscribe(function (state) {
-            localStorage.setItem("meng-todo", JSON.stringify(state));
+        src_1.default.children["App"].subscribe(function (store) {
+            localStorage.setItem("meng-todo", JSON.stringify(store));
         });
     };
     App.prototype.render = function () {
         var _this = this;
         var display = this.props.display;
-        console.log(this.props.rootStore);
+        console.log(this.props);
         var lis = this.props.list.filter(filter(display)).map(function (li, index) {
             if (li.status === "active")
                 return React.createElement(ActiveItem, { key: index, index: index, data: li, toggle: _this.toggle, destroy: _this.destroy });
@@ -93,8 +93,12 @@ var App = (function (_super) {
     return App;
 }(React.Component));
 App = __decorate([
-    src_1.inject(src_1.default, "rootStore"),
-    src_1.inject(app_api_1.getByCache, function (cache) { return cache; }),
+    src_1.inject(function (currentStore, nextStore) {
+        if (nextStore.p1 && nextStore.p1 !== currentStore.p1)
+            return Promise.resolve(nextStore.p1 + 2);
+    }, "p2"),
+    src_1.inject(function () { return Promise.resolve(1); }, "p1"),
+    src_1.inject(app_api_1.getByCache, function (cache) { return cache === null ? {} : cache; }),
     src_1.lift({ list: [], display: "all" }),
     __metadata("design:paramtypes", [])
 ], App);
