@@ -25,21 +25,32 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
       // 初始化state，并且和并props到state
       this.state = Object.assign(<T>{ callback: () => { } }, initialState, props)
       //创建自己的store
-      const currentStore = new ImplStore(initialState)
+      const currentStore = new ImplStore(this.state)
       //把自己的store挂在全局store里面
       rootStore.children[displayName] = currentStore
 
-      const props$ = Observable.of(props)
+      const resource$ = Observable.from(LiftedComponent.resource)
 
-      const fork$ = LiftedComponent.resource.map(source => fork.call(this, currentStore.state$, source))
+      const parts = resource$.partition(resource => resource.source$ instanceof Function && resource.source$.length > 0)
 
-      const merge$ = Observable.from(fork$).mergeAll()
+      const asyncResource = parts[1].map(source => fork(source))
 
-      currentStore.store$ =
+      const asyncResource$ = Observable.from(asyncResource).mergeAll()
+
+      const store$ =
         Observable
-          .merge(currentStore.state$, props$, merge$)
-          .filter(nextState => !shallowEqualValue(this.state, nextState))
+          .merge(currentStore.state$, asyncResource$)
           .map(nextState => Object.assign({}, this.state, nextState))
+          .publishReplay(2)
+          .refCount()
+          .pairwise()
+
+      const listenResource = parts[0].map(source => fork.call(this, source, store$))
+
+      //如果是from([]).mergeAll(),这条流会自动关闭，不用担心会emit一个空数组
+      const listenResource$ = Observable.from(listenResource).mergeAll()
+
+      currentStore.store$ = Observable.merge(store$.map(pairstore => pairstore[1]), listenResource$)
 
       //等currentStore生成之后才能给state的setState赋值
       this.state.setState = currentStore.setState
@@ -61,8 +72,9 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
      * 所以在didmount监听和订阅
      */
     public componentDidMount() {
+      const currentStore = rootStore.children[displayName]
       this.subscription =
-        rootStore.children[displayName].store$
+        currentStore.store$
           .subscribe((state: T) => {
             this.hasStoreStateChanged = true
             this.setState(state, state.callback)
@@ -76,7 +88,6 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
     public render() {
       this.hasStoreStateChanged = false
-
       return createElement(component as ComponentClass<P>, <T & P>this.state)
     }
 

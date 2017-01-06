@@ -5,7 +5,7 @@ import { ImplStore } from './'
 /**
  * 合并数据源
  */
-export function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource): Observable<S> {
+export function fork<S>({source$, success}: Resource, store$?: Observable<[S, S]>): Observable<S> {
 
     // stream
     if (source$ instanceof Observable)
@@ -19,13 +19,15 @@ export function fork<S>(state$: ReplaySubject<S>, {source$, success}: Resource):
     else if (source$ instanceof ImplStore)
         return source$.store$.map(implSelector(success))
 
-    //function，需要状态的函数换分支
+    //function，需要状态的函数换需要监听store$，并且直接返回新的store$，而不是新的state
     else if (source$ instanceof Function && source$.length > 0)
-        return state$.flatMap(state => fork(state$, { source$: source$(this.state, state), success }))
+        return store$
+            .flatMap(pairstore => fork({ source$: source$(pairstore[0], pairstore[1]), success }, store$))
+            .map((nextState: Object) => ({ ...this.state, ...nextState }))
 
     //不需要状态的函数继续执行
     else if (source$ instanceof Function && source$.length === 0)
-        return fork(state$, { source$: source$(this.state, this.state), success })
+        return fork({ source$: source$(this.state, this.state), success }, store$)
 
     //函数数据源有可能返回undefined
     else if (source$ == void 0)
@@ -40,3 +42,5 @@ export const combineLatestSelector = (acc: Object, x: Object) => Object.assign(a
 export const resetCallback = (state: Object) => Object.assign(state, { callback: () => { } })
 
 export const implSelector = (success: Success) => (state: Object) => typeof success === "string" ? ({ [success]: state }) : success(state)
+
+export const nullCheck = (state: Object) => state != void 0
