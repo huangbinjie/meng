@@ -75,7 +75,7 @@
 	                var lls = _this.props.list.slice();
 	                lls.push({ status: "active", value: event.target.value });
 	                event.target.value = "";
-	                _this.props.setState({ list: lls });
+	                _this.props.setState({ list: lls }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
 	            }
 	        };
 	        _this.toggle = function (data, index) { return function (event) {
@@ -86,25 +86,20 @@
 	                    return { status: "active", value: item.value };
 	                return item;
 	            });
-	            _this.props.setState({ list: items });
+	            _this.props.setState({ list: items }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
 	        }; };
 	        _this.destroy = function (index) { return function () {
 	            var items = _this.props.list.slice();
 	            items.splice(index, 1);
-	            _this.props.setState({ list: items });
+	            _this.props.setState({ list: items }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
 	        }; };
 	        _this.clearCompleted = function () {
 	            var items = _this.props.list.filter(function (item) { return item.status !== "completed"; });
-	            _this.props.setState({ list: items });
+	            _this.props.setState({ list: items }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
 	        };
-	        _this.show = function (display) { return function () { return _this.props.setState({ display: display }); }; };
+	        _this.show = function (display) { return function () { return _this.props.setState({ display: display }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); }); }; };
 	        return _this;
 	    }
-	    App.prototype.componentDidMount = function () {
-	        src_1.default.children["App"].subscribe(function (store) {
-	            localStorage.setItem("meng-todo", JSON.stringify(store));
-	        });
-	    };
 	    App.prototype.render = function () {
 	        var _this = this;
 	        var display = this.props.display;
@@ -39765,6 +39760,7 @@
 	var _1 = __webpack_require__(178);
 	var rxjs_1 = __webpack_require__(179);
 	var fork_1 = __webpack_require__(558);
+	var shallowEqual_1 = __webpack_require__(561);
 	exports.lift = function (initialState, initialName) {
 	    if (initialState === void 0) { initialState = {}; }
 	    return function (component) {
@@ -39774,16 +39770,16 @@
 	                function LiftedComponent(props) {
 	                    var _this = _super.call(this, props) || this;
 	                    _this.hasStoreStateChanged = true;
-	                    _this.state = Object.assign({ callback: function () { } }, initialState);
-	                    _this.state = Object.assign({ callback: function () { } }, initialState, props);
-	                    var currentStore = new _1.ImplStore(_this.state);
+	                    _this.state = Object.assign({}, initialState, props);
+	                    var currentStore = new _1.ImplStore();
 	                    _1.default.children[displayName] = currentStore;
+	                    var props$ = rxjs_1.Observable.of(props);
 	                    var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
 	                    var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
 	                    var asyncResource = parts[1].map(function (source) { return fork_1.fork(source); });
 	                    var asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
 	                    var store$ = rxjs_1.Observable
-	                        .merge(currentStore.state$, asyncResource$)
+	                        .merge(currentStore.state$, props$, asyncResource$)
 	                        .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
 	                        .publishReplay(2)
 	                        .refCount()
@@ -39807,10 +39803,12 @@
 	                    var currentStore = _1.default.children[displayName];
 	                    this.subscription =
 	                        currentStore.store$
+	                            .filter(function (store) { return !shallowEqual_1.default(_this.state, store); })
 	                            .subscribe(function (state) {
 	                            _this.hasStoreStateChanged = true;
-	                            _this.setState(state, state.callback);
+	                            var callback = state.callback || (function () { });
 	                            delete state.callback;
+	                            _this.setState(state, callback);
 	                        });
 	                };
 	                LiftedComponent.prototype.shouldComponentUpdate = function () {
@@ -43941,6 +43939,36 @@
 
 	"use strict";
 	exports.getByCache = function () { return new Promise(function (resolve, reject) { return resolve(JSON.parse(localStorage.getItem("meng-todo"))); }); };
+
+
+/***/ },
+/* 561 */
+/***/ function(module, exports) {
+
+	"use strict";
+	function shallowEqual(objA, objB) {
+	    if (objA === objB) {
+	        return true;
+	    }
+	    if (objA == void 0 || objB == void 0) {
+	        return false;
+	    }
+	    var keysA = Object.keys(objA);
+	    var keysB = Object.keys(objB);
+	    if (keysA.length !== keysB.length) {
+	        return false;
+	    }
+	    var hasOwn = Object.prototype.hasOwnProperty;
+	    for (var i = 0; i < keysA.length; i++) {
+	        if (!hasOwn.call(objB, keysA[i]) ||
+	            objA[keysA[i]] !== objB[keysA[i]]) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = shallowEqual;
 
 
 /***/ }

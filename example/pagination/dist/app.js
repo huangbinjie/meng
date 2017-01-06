@@ -56,9 +56,8 @@
 	};
 	const React = __webpack_require__(1);
 	const react_dom_1 = __webpack_require__(38);
-	const rxjs_1 = __webpack_require__(168);
 	const _1 = __webpack_require__(509);
-	const api_1 = __webpack_require__(514);
+	const api_1 = __webpack_require__(515);
 	let App = class App extends React.Component {
 	    constructor() {
 	        super(...arguments);
@@ -84,8 +83,6 @@
 	    }
 	};
 	App = __decorate([
-	    _1.inject(_1.default, "rootStore"),
-	    _1.inject((state) => rxjs_1.Observable.of(1), "c"),
 	    _1.inject(api_1.fetchData, "lis"),
 	    _1.lift({ lis: [], page: 1 }),
 	    __metadata("design:paramtypes", [])
@@ -38587,7 +38584,7 @@
 	const rootStore = new ImplStore();
 	var lift_1 = __webpack_require__(511);
 	exports.lift = lift_1.lift;
-	var inject_1 = __webpack_require__(513);
+	var inject_1 = __webpack_require__(514);
 	exports.inject = inject_1.inject;
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = rootStore;
@@ -38624,46 +38621,51 @@
 	const _1 = __webpack_require__(509);
 	const rxjs_1 = __webpack_require__(168);
 	const fork_1 = __webpack_require__(512);
-	const shallowEqualValue_1 = __webpack_require__(510);
+	const shallowEqual_1 = __webpack_require__(513);
 	exports.lift = (initialState = {}, initialName) => (component) => {
 	    const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
 	    return _a = class LiftedComponent extends react_1.Component {
-	            constructor() {
-	                super(...arguments);
-	                this._isMounted = false;
-	                this.state = Object.assign({ callback: () => { } }, initialState);
+	            constructor(props) {
+	                super(props);
+	                this.hasStoreStateChanged = true;
+	                this.state = Object.assign({}, initialState, props);
+	                const currentStore = new _1.ImplStore();
+	                _1.default.children[displayName] = currentStore;
+	                const props$ = rxjs_1.Observable.of(props);
+	                const resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
+	                const parts = resource$.partition(resource => resource.source$ instanceof Function && resource.source$.length > 0);
+	                const asyncResource = parts[1].map(source => fork_1.fork(source));
+	                const asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
+	                const store$ = rxjs_1.Observable
+	                    .merge(currentStore.state$, props$, asyncResource$)
+	                    .map(nextState => Object.assign({}, this.state, nextState))
+	                    .publishReplay(2)
+	                    .refCount()
+	                    .pairwise();
+	                const listenResource = parts[0].map(source => fork_1.fork.call(this, source, store$));
+	                const listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
+	                currentStore.store$ = rxjs_1.Observable.merge(store$.map(pairstore => pairstore[1]), listenResource$);
+	                this.state.setState = currentStore.setState;
 	            }
 	            componentWillUnmount() {
 	                _1.default.children[displayName] = null;
-	                this._isMounted = false;
 	                this.hasStoreStateChanged = false;
 	                this.subscription.unsubscribe();
 	            }
 	            componentWillReceiveProps(nextProps) {
 	                _1.default.children[displayName].setState(nextProps);
 	            }
-	            componentWillMount() {
-	                const currentStore = new _1.ImplStore(initialState);
-	                _1.default.children[displayName] = currentStore;
-	                const props$ = rxjs_1.Observable.of(this.props);
-	                const fork$ = LiftedComponent.resource.map(source => fork_1.fork.call(this, currentStore.state$, source));
-	                const merge$ = rxjs_1.Observable.from(fork$).mergeAll();
-	                currentStore.store$ =
-	                    rxjs_1.Observable
-	                        .merge(currentStore.state$, props$, merge$)
-	                        .filter(nextState => !shallowEqualValue_1.default(this.state, nextState))
-	                        .map(nextState => Object.assign({}, this.state, nextState));
+	            componentDidMount() {
+	                const currentStore = _1.default.children[displayName];
 	                this.subscription =
 	                    currentStore.store$
+	                        .filter(store => !shallowEqual_1.default(this.state, store))
 	                        .subscribe((state) => {
 	                        this.hasStoreStateChanged = true;
-	                        this.setState(state, state.callback);
+	                        const callback = state.callback || (() => { });
 	                        delete state.callback;
+	                        this.setState(state, callback);
 	                    });
-	                this.setState({ setState: currentStore.setState });
-	            }
-	            componentDidMount() {
-	                this._isMounted = true;
 	            }
 	            shouldComponentUpdate() {
 	                return this.hasStoreStateChanged;
@@ -38685,21 +38687,29 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
+	var __assign = (this && this.__assign) || Object.assign || function(t) {
+	    for (var s, i = 1, n = arguments.length; i < n; i++) {
+	        s = arguments[i];
+	        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+	            t[p] = s[p];
+	    }
+	    return t;
+	};
 	const rxjs_1 = __webpack_require__(168);
 	const _1 = __webpack_require__(509);
-	function fork(state$, { source$, success }) {
-	    if (source$ instanceof rxjs_1.Observable) {
+	function fork({ source$, success }, store$) {
+	    if (source$ instanceof rxjs_1.Observable)
 	        return source$.map(exports.implSelector(success));
-	    }
-	    else if (source$ instanceof Promise) {
+	    else if (source$ instanceof Promise)
 	        return rxjs_1.Observable.fromPromise(source$).map(exports.implSelector(success));
-	    }
 	    else if (source$ instanceof _1.ImplStore)
 	        return source$.store$.map(exports.implSelector(success));
 	    else if (source$ instanceof Function && source$.length > 0)
-	        return state$.flatMap(state => fork(state$, { source$: source$(this.state, state), success }));
+	        return store$
+	            .flatMap(pairstore => fork({ source$: source$(pairstore[0], pairstore[1]), success }, store$))
+	            .map((nextState) => (__assign({}, this.state, nextState)));
 	    else if (source$ instanceof Function && source$.length === 0)
-	        return fork(state$, { source$: source$(this.state, this.state), success });
+	        return fork({ source$: source$(this.state, this.state), success }, store$);
 	    else if (source$ == void 0)
 	        return rxjs_1.Observable.never();
 	    else
@@ -38709,10 +38719,41 @@
 	exports.combineLatestSelector = (acc, x) => Object.assign(acc, x);
 	exports.resetCallback = (state) => Object.assign(state, { callback: () => { } });
 	exports.implSelector = (success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(state);
+	exports.nullCheck = (state) => state != void 0;
 
 
 /***/ },
 /* 513 */
+/***/ function(module, exports) {
+
+	"use strict";
+	function shallowEqual(objA, objB) {
+	    if (objA === objB) {
+	        return true;
+	    }
+	    if (objA == void 0 || objB == void 0) {
+	        return false;
+	    }
+	    const keysA = Object.keys(objA);
+	    const keysB = Object.keys(objB);
+	    if (keysA.length !== keysB.length) {
+	        return false;
+	    }
+	    const hasOwn = Object.prototype.hasOwnProperty;
+	    for (let i = 0; i < keysA.length; i++) {
+	        if (!hasOwn.call(objB, keysA[i]) ||
+	            objA[keysA[i]] !== objB[keysA[i]]) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = shallowEqual;
+
+
+/***/ },
+/* 514 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -38723,7 +38764,7 @@
 
 
 /***/ },
-/* 514 */
+/* 515 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -38732,8 +38773,8 @@
 	const page3 = Array.apply(null, { length: 10 }).map((acc, x) => (3 - 1) * 10 + x + 1);
 	const page4 = Array.apply(null, { length: 10 }).map((acc, x) => (4 - 1) * 10 + x + 1);
 	const page5 = Array.apply(null, { length: 10 }).map((acc, x) => (5 - 1) * 10 + x + 1);
-	exports.fetchData = (currentState, nextState) => new Promise((resolve, reject) => {
-	    switch (nextState.page) {
+	exports.fetchData = (currentStore, nextStore) => new Promise((resolve, reject) => {
+	    switch (nextStore.page) {
 	        case 1: resolve(page1);
 	        case 2: resolve(page2);
 	        case 3: resolve(page3);

@@ -10,7 +10,7 @@ function* dataGenerator() {
     }
 }
 const gen = dataGenerator();
-exports.fetchData = (currentState, nextState) => new Promise((resolve, reject) => {
+exports.fetchData = (currentStore, nextStore) => new Promise((resolve, reject) => {
     console.log("this is a request");
-    resolve(currentState.lis.concat(gen.next().value));
+    resolve(nextStore.lis.concat(gen.next().value));
 });

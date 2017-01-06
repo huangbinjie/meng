@@ -29,7 +29,7 @@ var App = (function (_super) {
                 var lls = _this.props.list.slice();
                 lls.push({ status: "active", value: event.target.value });
                 event.target.value = "";
-                _this.props.setState({ list: lls });
+                _this.props.setState({ list: lls }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
             }
         };
         _this.toggle = function (data, index) { return function (event) {
@@ -40,25 +40,20 @@ var App = (function (_super) {
                     return { status: "active", value: item.value };
                 return item;
             });
-            _this.props.setState({ list: items });
+            _this.props.setState({ list: items }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
         }; };
         _this.destroy = function (index) { return function () {
             var items = _this.props.list.slice();
             items.splice(index, 1);
-            _this.props.setState({ list: items });
+            _this.props.setState({ list: items }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
         }; };
         _this.clearCompleted = function () {
             var items = _this.props.list.filter(function (item) { return item.status !== "completed"; });
-            _this.props.setState({ list: items });
+            _this.props.setState({ list: items }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); });
         };
-        _this.show = function (display) { return function () { return _this.props.setState({ display: display }); }; };
+        _this.show = function (display) { return function () { return _this.props.setState({ display: display }, function () { return localStorage.setItem("meng-todo", JSON.stringify(_this.props)); }); }; };
         return _this;
     }
-    App.prototype.componentDidMount = function () {
-        src_1.default.children["App"].subscribe(function (store) {
-            localStorage.setItem("meng-todo", JSON.stringify(store));
-        });
-    };
     App.prototype.render = function () {
         var _this = this;
         var display = this.props.display;

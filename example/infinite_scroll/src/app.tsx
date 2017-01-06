@@ -20,7 +20,8 @@ class App extends React.Component<any, any> {
         )
     }
     private onend = () => {
-        this.props.setState({})
+        const page = this.props.page
+        this.props.setState({ page: page + 1 })
     }
 }
 

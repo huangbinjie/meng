@@ -10,7 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 const React = require("react");
 const react_dom_1 = require("react-dom");
-const rxjs_1 = require("rxjs");
 const _1 = require("../../../src/");
 const api_1 = require("./api");
 let App = class App extends React.Component {
@@ -38,8 +37,6 @@ let App = class App extends React.Component {
     }
 };
 App = __decorate([
-    _1.inject(_1.default, "rootStore"),
-    _1.inject((state) => rxjs_1.Observable.of(1), "c"),
     _1.inject(api_1.fetchData, "lis"),
     _1.lift({ lis: [], page: 1 }),
     __metadata("design:paramtypes", [])

@@ -17,7 +17,8 @@ let App = class App extends React.Component {
     constructor() {
         super(...arguments);
         this.onend = () => {
-            this.props.setState({});
+            const page = this.props.page;
+            this.props.setState({ page: page + 1 });
         };
     }
     render() {

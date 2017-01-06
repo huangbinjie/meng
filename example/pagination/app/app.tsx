@@ -10,9 +10,6 @@ type State = {
     page: number
 }
 
-@inject(Store, "rootStore")
-
-@inject((state: any) => Observable.of(1), "c")
 @inject(fetchData, "lis")
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, void> {
