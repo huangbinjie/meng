@@ -21591,7 +21591,7 @@
 	    return t;
 	};
 	var rxjs_1 = __webpack_require__(179);
-	var shallowEqualValue_1 = __webpack_require__(520);
+	var shallowEqual_1 = __webpack_require__(520);
 	var ImplStore = (function () {
 	    function ImplStore(initialState) {
 	        if (initialState === void 0) { initialState = {}; }
@@ -21606,7 +21606,7 @@
 	            return _this.store$.subscribe(success, error, complete);
 	        };
 	        this.state$.next(initialState);
-	        this.store$ = this.state$.distinctUntilChanged(shallowEqualValue_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
+	        this.store$ = this.state$.distinctUntilChanged(shallowEqual_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
 	    }
 	    return ImplStore;
 	}());
@@ -39729,21 +39729,29 @@
 /***/ function(module, exports) {
 
 	"use strict";
-	function shallowEqualValue(source, target) {
-	    var targetKeys = Object.keys(target);
-	    if (targetKeys.length === 0)
+	function shallowEqual(objA, objB) {
+	    if (objA === objB) {
 	        return true;
+	    }
+	    if (objA == void 0 || objB == void 0) {
+	        return false;
+	    }
+	    var keysA = Object.keys(objA);
+	    var keysB = Object.keys(objB);
+	    if (keysA.length !== keysB.length) {
+	        return false;
+	    }
 	    var hasOwn = Object.prototype.hasOwnProperty;
-	    for (var i = 0; i < targetKeys.length; i++) {
-	        if (!hasOwn.call(source, targetKeys[i]) ||
-	            source[targetKeys[i]] !== target[targetKeys[i]]) {
+	    for (var i = 0; i < keysA.length; i++) {
+	        if (!hasOwn.call(objB, keysA[i]) ||
+	            objA[keysA[i]] !== objB[keysA[i]]) {
 	            return false;
 	        }
 	    }
 	    return true;
 	}
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = shallowEqualValue;
+	exports.default = shallowEqual;
 
 
 /***/ },
@@ -39760,7 +39768,7 @@
 	var _1 = __webpack_require__(178);
 	var rxjs_1 = __webpack_require__(179);
 	var fork_1 = __webpack_require__(558);
-	var shallowEqual_1 = __webpack_require__(561);
+	var shallowEqual_1 = __webpack_require__(520);
 	exports.lift = function (initialState, initialName) {
 	    if (initialState === void 0) { initialState = {}; }
 	    return function (component) {
@@ -39785,7 +39793,7 @@
 	                        .refCount()
 	                        .pairwise();
 	                    var listenResource = parts[0].map(function (source) { return fork_1.fork.call(_this, source, store$); });
-	                    var listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
+	                    var listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll().map(function (nextState) { return Object.assign({}, _this.state, nextState); });
 	                    currentStore.store$ = rxjs_1.Observable.merge(store$.map(function (pairstore) { return pairstore[1]; }), listenResource$);
 	                    _this.state.setState = currentStore.setState;
 	                    return _this;
@@ -43880,18 +43888,9 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
-	var __assign = (this && this.__assign) || Object.assign || function(t) {
-	    for (var s, i = 1, n = arguments.length; i < n; i++) {
-	        s = arguments[i];
-	        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-	            t[p] = s[p];
-	    }
-	    return t;
-	};
 	var rxjs_1 = __webpack_require__(179);
 	var _1 = __webpack_require__(178);
 	function fork(_a, store$) {
-	    var _this = this;
 	    var source$ = _a.source$, success = _a.success;
 	    if (source$ instanceof rxjs_1.Observable)
 	        return source$.map(exports.implSelector(success));
@@ -43900,9 +43899,7 @@
 	    else if (source$ instanceof _1.ImplStore)
 	        return source$.store$.map(exports.implSelector(success));
 	    else if (source$ instanceof Function && source$.length > 0)
-	        return store$
-	            .flatMap(function (pairstore) { return fork({ source$: source$(pairstore[0], pairstore[1]), success: success }, store$); })
-	            .map(function (nextState) { return (__assign({}, _this.state, nextState)); });
+	        return store$.flatMap(function (pairstore) { return fork({ source$: source$(pairstore[0], pairstore[1]), success: success }, store$); });
 	    else if (source$ instanceof Function && source$.length === 0)
 	        return fork({ source$: source$(this.state, this.state), success: success }, store$);
 	    else if (source$ == void 0)
@@ -43939,36 +43936,6 @@
 
 	"use strict";
 	exports.getByCache = function () { return new Promise(function (resolve, reject) { return resolve(JSON.parse(localStorage.getItem("meng-todo"))); }); };
-
-
-/***/ },
-/* 561 */
-/***/ function(module, exports) {
-
-	"use strict";
-	function shallowEqual(objA, objB) {
-	    if (objA === objB) {
-	        return true;
-	    }
-	    if (objA == void 0 || objB == void 0) {
-	        return false;
-	    }
-	    var keysA = Object.keys(objA);
-	    var keysB = Object.keys(objB);
-	    if (keysA.length !== keysB.length) {
-	        return false;
-	    }
-	    var hasOwn = Object.prototype.hasOwnProperty;
-	    for (var i = 0; i < keysA.length; i++) {
-	        if (!hasOwn.call(objB, keysA[i]) ||
-	            objA[keysA[i]] !== objB[keysA[i]]) {
-	            return false;
-	        }
-	    }
-	    return true;
-	}
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = shallowEqual;
 
 
 /***/ }
