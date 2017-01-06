@@ -48,7 +48,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
       const listenResource = parts[0].map(source => fork.call(this, source, store$))
 
       //如果是from([]).mergeAll(),这条流会自动关闭，不用担心会emit一个空数组
-      const listenResource$ = Observable.from(listenResource).mergeAll()
+      const listenResource$ = Observable.from(listenResource).mergeAll().map((nextState: Object) => Object.assign({}, this.state, nextState))
 
       currentStore.store$ = Observable.merge(store$.map(pairstore => pairstore[1]), listenResource$)
 

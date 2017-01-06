@@ -19,11 +19,9 @@ export function fork<S>({source$, success}: Resource, store$?: Observable<[S, S]
     else if (source$ instanceof ImplStore)
         return source$.store$.map(implSelector(success))
 
-    //function，需要状态的函数换需要监听store$，并且直接返回新的store$，而不是新的state
+    //function，需要状态的函数换需要监听store$
     else if (source$ instanceof Function && source$.length > 0)
-        return store$
-            .flatMap(pairstore => fork({ source$: source$(pairstore[0], pairstore[1]), success }, store$))
-            .map((nextState: Object) => ({ ...this.state, ...nextState }))
+        return store$.flatMap(pairstore => fork({ source$: source$(pairstore[0], pairstore[1]), success }, store$))
 
     //不需要状态的函数继续执行
     else if (source$ instanceof Function && source$.length === 0)
