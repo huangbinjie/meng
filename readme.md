@@ -13,6 +13,7 @@ npm i meng --save
 总所周知，react是一个侧重同步数据到dom的库，也就是`(data) => dom`. 这里的data包含了`props`和`state`，但是其他的数据源不好管理，比如说api。
 而现有的方案用起来都太复杂了，本来`(data) => dom`一个函数能解决的问题，用了flux架构比如redux之后，需要的模块*3。所以能不能用一种简单的方式把所有数据源都抽象成`data`，
 并且能用react的方式解决问题呢，答案是肯定的，我们可以这么设计`({props, state, api}) => dom`。于是就有了meng--一个把所有数据源都抽象合并成一种数据类型的库。
+由于只有rxjs能帮我们实现流的特性，所以meng@3.x是强依赖rxjs的。
 
 ## api
 
@@ -30,7 +31,8 @@ interface Store<S> {
 }
 ```
 
-所有的meng组件的状态又都会放在根节点的children里面，所以meng支持直接修改和订阅另一个组件的状态，下面是一段demo:
+所有的meng组件的状态又都会放在根节点的children里面，所以meng支持直接修改和订阅另一个组件的状态。也可以把store想象成ng的rootScope，
+而children里面的store相当于ng里controller对应的store。下面是一段demo:
 
 ```js
 import Store from 'meng'
@@ -86,6 +88,70 @@ export default class Detail extends React.Component<any, any> {
 }
 ```
 
+## 高阶用法
+
+因为inject可以接受并订阅你的任意类型数据，所以你可以随意组合你的数据源，也可以组合成高阶数据源(依赖其他数据源的数据源)，并把他们作为你视图的数据层。
+
+```js
+//组合数据源
+didmount() {
+  fetch("xxx")
+    .then(x => fetch("yyy"))
+    .then(yyy => this.setState({yyy}))
+}
+
+//数据源订阅数据源
+didmount() {
+  fetch("xxx")
+    .then(xxx => {
+      this.setState({xxx})
+      return fetch("yyy")
+    })
+    .then(yyy => this.setState({yyy}))
+}
+
+//商品详情 url: xxx/:pid
+componentReceiveProps(nextProps) {
+  if (this.props.pid !== nextProps.pid) getById(pid).then(data => this.setState({data}))
+}
+
+componentDidMount() {
+  getById(pid).then(data => this.setState({data}))
+}
+
+//websocket
+didmount() {
+  this.ws = new Websocket(url)
+
+  ws.onmessage = (message) => {
+    this.setState(message)
+  }
+}
+
+willUnmount() {
+  ws.close()
+}
+```
+
+mengbi.jsÏ
+
+```js
+//组合数据源
+@inject(() => fetch(xxx).then(xxx => fetch(yyy)), "yyy")
+@lift({yyy: null})
+
+//数据源订阅数据源
+@inject((currentStore, nextStore) => currentStore.xxx !== nextStore.xxx ? fetch(yyy) : null, "yyy")
+@inject(() => fetch(xxx), "xxx")
+@lift({xxx: null, yyy: null})
+
+//商品详情 url: xxx/:pid
+@inject((currentStore, nextStore) => currentStore.pid !== nextStore.pid ? getById(nextStore) : null, "data")
+
+//websocket(rxjs)
+@inject(() => Observable.webSocket(url), "message")Ï
+```
+
 ## 使用上的建议
 
 因为meng是管理数据源为主，夸组件通讯为辅的。你可以像redux那样直接注入数据源，但是应该尽量避免让组件从其他地方获取数据，原则上组件获取数据的方式只有一个，就是父组件，
@@ -93,4 +159,4 @@ export default class Detail extends React.Component<any, any> {
 
 ## 其他
 
-不需要初始化，不需要配置，不需要`import redux-xxx * N`，赶快试试吧。如果有好的建议，请发我邮箱: akira.binjie@gmail.com
+不需要初始化，不需要配置，不需要`import redux-xxx * N`，赶快试试吧。如果有好的建议，请发我邮箱: `akira.binjie@gmail.com`或者加我扣扣`501711499`
