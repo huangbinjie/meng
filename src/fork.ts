@@ -25,7 +25,7 @@ export function fork<S>({source$, success}: Resource, store$?: Observable<[S, S]
 
     //不需要状态的函数继续执行
     else if (source$ instanceof Function && source$.length === 0)
-        return fork({ source$: source$(this.state, this.state), success }, store$)
+        return fork({ source$: source$(), success }, store$)
 
     //函数数据源有可能返回undefined
     else if (source$ == void 0)

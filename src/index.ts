@@ -1,7 +1,7 @@
 import { ReplaySubject, Observable, Subscription } from 'rxjs'
 import { StatelessComponent, ComponentLifecycle } from 'react'
 import { Resource } from './inject'
-import shallowValue from './utils/shallowEqual'
+import shallowPartialEqual from './utils/shallowPartialEqual'
 
 export interface Store<S> {
     state$: ReplaySubject<S>
@@ -33,7 +33,7 @@ export namespace Meng {
 export class ImplStore<S> implements Store<S> {
     constructor(initialState = <S>{}) {
         this.state$.next(initialState)
-        this.store$ = this.state$.distinctUntilChanged(shallowValue).scan((acc, x) => ({ ...acc, ...x }))
+        this.store$ = this.state$.distinctUntilChanged(shallowPartialEqual).scan((acc, x) => ({ ...acc, ...x }))
     }
 
     public store$: Observable<S>

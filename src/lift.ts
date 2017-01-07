@@ -15,19 +15,19 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
   return class LiftedComponent extends Component<P, T> {
     static displayName = `Meng(${displayName})`
     static resource: Resource[] = []
-    private hasStoreStateChanged = true
+    private hasStoreStateChanged: Boolean
     private subscription: Subscription
 
     public constructor(props: P) {
       super(props)
-      // 初始化state，并且和并props到state
-      this.state = Object.assign(<T>{}, initialState, props)
       //创建自己的store
       const currentStore = new ImplStore()
+      // 初始化state，并且和并props到state
+      this.state = Object.assign(<T>{ setState: currentStore.setState }, initialState, props)
       //把自己的store挂在全局store里面
       rootStore.children[displayName] = currentStore
 
-      const props$ = Observable.of(props)
+      const state$ = Observable.of(this.state)
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -38,9 +38,9 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
       const asyncResource$ = Observable.from(asyncResource).mergeAll()
 
       const store$ =
-        Observable
-          .merge(currentStore.state$, props$, asyncResource$)
-          .map(nextState => Object.assign({}, this.state, nextState))
+        currentStore.state$
+          .merge(state$, asyncResource$)
+          .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
           .publishReplay(2)
           .refCount()
           .pairwise()
@@ -48,12 +48,10 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
       const listenResource = parts[0].map(source => fork.call(this, source, store$))
 
       //如果是from([]).mergeAll(),这条流会自动关闭，不用担心会emit一个空数组
-      const listenResource$ = Observable.from(listenResource).mergeAll().map((nextState: Object) => Object.assign({}, this.state, nextState))
+      const listenResource$ = Observable.from(listenResource).mergeAll()
 
-      currentStore.store$ = Observable.merge(store$.map(pairstore => pairstore[1]), listenResource$)
+      currentStore.store$ = store$.map(pairstore => pairstore[1]).merge(listenResource$).scan((nextStore, nextStoreOrState) => Object.assign(nextStore, nextStoreOrState))
 
-      //等currentStore生成之后才能给state的setState赋值
-      this.state.setState = currentStore.setState
     }
 
     public componentWillUnmount() {
