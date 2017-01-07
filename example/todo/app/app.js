@@ -89,7 +89,7 @@ var App = (function (_super) {
 }(React.Component));
 App = __decorate([
     src_1.inject(function (currentStore, nextStore) {
-        if (nextStore.p1 && nextStore.p1 !== currentStore.p1)
+        if (nextStore.p1 !== currentStore.p1)
             return Promise.resolve(nextStore.p1 + 2);
     }, "p2"),
     src_1.inject(function () { return Promise.resolve(1); }, "p1"),

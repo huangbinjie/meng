@@ -63,7 +63,7 @@
 	var react_dom_1 = __webpack_require__(32);
 	var src_1 = __webpack_require__(178);
 	window["Store"] = src_1.default;
-	var app_api_1 = __webpack_require__(560);
+	var app_api_1 = __webpack_require__(561);
 	var App = (function (_super) {
 	    __extends(App, _super);
 	    function App() {
@@ -135,7 +135,7 @@
 	}(React.Component));
 	App = __decorate([
 	    src_1.inject(function (currentStore, nextStore) {
-	        if (nextStore.p1 && nextStore.p1 !== currentStore.p1)
+	        if (nextStore.p1 !== currentStore.p1)
 	            return Promise.resolve(nextStore.p1 + 2);
 	    }, "p2"),
 	    src_1.inject(function () { return Promise.resolve(1); }, "p1"),
@@ -21591,7 +21591,7 @@
 	    return t;
 	};
 	var rxjs_1 = __webpack_require__(179);
-	var shallowEqual_1 = __webpack_require__(520);
+	var shallowPartialEqual_1 = __webpack_require__(520);
 	var ImplStore = (function () {
 	    function ImplStore(initialState) {
 	        if (initialState === void 0) { initialState = {}; }
@@ -21606,7 +21606,7 @@
 	            return _this.store$.subscribe(success, error, complete);
 	        };
 	        this.state$.next(initialState);
-	        this.store$ = this.state$.distinctUntilChanged(shallowEqual_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
+	        this.store$ = this.state$.distinctUntilChanged(shallowPartialEqual_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
 	    }
 	    return ImplStore;
 	}());
@@ -21614,7 +21614,7 @@
 	var rootStore = new ImplStore();
 	var lift_1 = __webpack_require__(521);
 	exports.lift = lift_1.lift;
-	var inject_1 = __webpack_require__(559);
+	var inject_1 = __webpack_require__(560);
 	exports.inject = inject_1.inject;
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = rootStore;
@@ -39729,29 +39729,19 @@
 /***/ function(module, exports) {
 
 	"use strict";
-	function shallowEqual(objA, objB) {
-	    if (objA === objB) {
-	        return true;
-	    }
-	    if (objA == void 0 || objB == void 0) {
-	        return false;
-	    }
-	    var keysA = Object.keys(objA);
-	    var keysB = Object.keys(objB);
-	    if (keysA.length !== keysB.length) {
-	        return false;
-	    }
+	function shallowPartialEqual(source, target) {
+	    var targetKeys = Object.keys(target);
 	    var hasOwn = Object.prototype.hasOwnProperty;
-	    for (var i = 0; i < keysA.length; i++) {
-	        if (!hasOwn.call(objB, keysA[i]) ||
-	            objA[keysA[i]] !== objB[keysA[i]]) {
+	    for (var i = 0; i < targetKeys.length; i++) {
+	        if (!hasOwn.call(source, targetKeys[i]) ||
+	            source[targetKeys[i]] !== target[targetKeys[i]]) {
 	            return false;
 	        }
 	    }
 	    return true;
 	}
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = shallowEqual;
+	exports.default = shallowPartialEqual;
 
 
 /***/ },
@@ -39768,7 +39758,7 @@
 	var _1 = __webpack_require__(178);
 	var rxjs_1 = __webpack_require__(179);
 	var fork_1 = __webpack_require__(558);
-	var shallowEqual_1 = __webpack_require__(520);
+	var shallowEqual_1 = __webpack_require__(559);
 	exports.lift = function (initialState, initialName) {
 	    if (initialState === void 0) { initialState = {}; }
 	    return function (component) {
@@ -39777,25 +39767,23 @@
 	                __extends(LiftedComponent, _super);
 	                function LiftedComponent(props) {
 	                    var _this = _super.call(this, props) || this;
-	                    _this.hasStoreStateChanged = true;
-	                    _this.state = Object.assign({}, initialState, props);
 	                    var currentStore = new _1.ImplStore();
+	                    _this.state = Object.assign({ setState: currentStore.setState }, initialState, props);
 	                    _1.default.children[displayName] = currentStore;
-	                    var props$ = rxjs_1.Observable.of(props);
+	                    var state$ = rxjs_1.Observable.of(_this.state);
 	                    var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
 	                    var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
 	                    var asyncResource = parts[1].map(function (source) { return fork_1.fork(source); });
 	                    var asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
-	                    var store$ = rxjs_1.Observable
-	                        .merge(currentStore.state$, props$, asyncResource$)
-	                        .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
+	                    var store$ = currentStore.state$
+	                        .merge(state$, asyncResource$)
+	                        .scan(function (currentStore, nextState) { return Object.assign({}, currentStore, nextState); })
 	                        .publishReplay(2)
 	                        .refCount()
 	                        .pairwise();
 	                    var listenResource = parts[0].map(function (source) { return fork_1.fork.call(_this, source, store$); });
-	                    var listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll().map(function (nextState) { return Object.assign({}, _this.state, nextState); });
-	                    currentStore.store$ = rxjs_1.Observable.merge(store$.map(function (pairstore) { return pairstore[1]; }), listenResource$);
-	                    _this.state.setState = currentStore.setState;
+	                    var listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
+	                    currentStore.store$ = store$.map(function (pairstore) { return pairstore[1]; }).merge(listenResource$).scan(function (nextStore, nextStoreOrState) { return Object.assign(nextStore, nextStoreOrState); });
 	                    return _this;
 	                }
 	                LiftedComponent.prototype.componentWillUnmount = function () {
@@ -43901,7 +43889,7 @@
 	    else if (source$ instanceof Function && source$.length > 0)
 	        return store$.flatMap(function (pairstore) { return fork({ source$: source$(pairstore[0], pairstore[1]), success: success }, store$); });
 	    else if (source$ instanceof Function && source$.length === 0)
-	        return fork({ source$: source$(this.state, this.state), success: success }, store$);
+	        return fork({ source$: source$(), success: success }, store$);
 	    else if (source$ == void 0)
 	        return rxjs_1.Observable.never();
 	    else
@@ -43922,6 +43910,36 @@
 /***/ function(module, exports) {
 
 	"use strict";
+	function shallowEqual(objA, objB) {
+	    if (objA === objB) {
+	        return true;
+	    }
+	    if (objA == void 0 || objB == void 0) {
+	        return false;
+	    }
+	    var keysA = Object.keys(objA);
+	    var keysB = Object.keys(objB);
+	    if (keysA.length !== keysB.length) {
+	        return false;
+	    }
+	    var hasOwn = Object.prototype.hasOwnProperty;
+	    for (var i = 0; i < keysA.length; i++) {
+	        if (!hasOwn.call(objB, keysA[i]) ||
+	            objA[keysA[i]] !== objB[keysA[i]]) {
+	            return false;
+	        }
+	    }
+	    return true;
+	}
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = shallowEqual;
+
+
+/***/ },
+/* 560 */
+/***/ function(module, exports) {
+
+	"use strict";
 	exports.inject = function (source$, success) {
 	    return function (component) {
 	        component.resource.push({ source$: source$, success: success });
@@ -43931,7 +43949,7 @@
 
 
 /***/ },
-/* 560 */
+/* 561 */
 /***/ function(module, exports) {
 
 	"use strict";

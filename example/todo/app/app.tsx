@@ -7,7 +7,7 @@ import { getByCache } from './app.api'
 @inject((currentStore, nextStore) => {
     // console.log(currentStore)
     // console.log(nextStore)
-    if (nextStore.p1 && nextStore.p1 !== currentStore.p1)
+    if (nextStore.p1 !== currentStore.p1)
         return Promise.resolve(nextStore.p1 + 2)
 }, "p2")
 @inject(() => Promise.resolve(1), "p1")
