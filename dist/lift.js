@@ -17,25 +17,23 @@ exports.lift = function (initialState, initialName) {
                 __extends(LiftedComponent, _super);
                 function LiftedComponent(props) {
                     var _this = _super.call(this, props) || this;
-                    _this.hasStoreStateChanged = true;
-                    _this.state = Object.assign({}, initialState, props);
                     var currentStore = new _1.ImplStore();
+                    _this.state = Object.assign({ setState: currentStore.setState }, initialState, props);
                     _1.default.children[displayName] = currentStore;
-                    var props$ = rxjs_1.Observable.of(props);
+                    var state$ = rxjs_1.Observable.of(_this.state);
                     var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
                     var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
                     var asyncResource = parts[1].map(function (source) { return fork_1.fork(source); });
                     var asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
-                    var store$ = rxjs_1.Observable
-                        .merge(currentStore.state$, props$, asyncResource$)
-                        .map(function (nextState) { return Object.assign({}, _this.state, nextState); })
+                    var store$ = currentStore.state$
+                        .merge(state$, asyncResource$)
+                        .scan(function (currentStore, nextState) { return Object.assign({}, currentStore, nextState); })
                         .publishReplay(2)
                         .refCount()
                         .pairwise();
                     var listenResource = parts[0].map(function (source) { return fork_1.fork.call(_this, source, store$); });
                     var listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
-                    currentStore.store$ = rxjs_1.Observable.merge(store$.map(function (pairstore) { return pairstore[1]; }), listenResource$);
-                    _this.state.setState = currentStore.setState;
+                    currentStore.store$ = store$.map(function (pairstore) { return pairstore[1]; }).merge(listenResource$).scan(function (nextStore, nextStoreOrState) { return Object.assign(nextStore, nextStoreOrState); });
                     return _this;
                 }
                 LiftedComponent.prototype.componentWillUnmount = function () {

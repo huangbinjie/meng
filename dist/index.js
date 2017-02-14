@@ -8,7 +8,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     return t;
 };
 var rxjs_1 = require("rxjs");
-var shallowEqual_1 = require("./utils/shallowEqual");
+var shallowPartialEqual_1 = require("./utils/shallowPartialEqual");
 var ImplStore = (function () {
     function ImplStore(initialState) {
         if (initialState === void 0) { initialState = {}; }
@@ -23,7 +23,7 @@ var ImplStore = (function () {
             return _this.store$.subscribe(success, error, complete);
         };
         this.state$.next(initialState);
-        this.store$ = this.state$.distinctUntilChanged(shallowEqual_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
+        this.store$ = this.state$.distinctUntilChanged(shallowPartialEqual_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
     }
     return ImplStore;
 }());
