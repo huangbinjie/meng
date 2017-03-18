@@ -7,6 +7,7 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
     }
     return t;
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 var rxjs_1 = require("rxjs");
 var shallowPartialEqual_1 = require("./utils/shallowPartialEqual");
 var ImplStore = (function () {
@@ -33,6 +34,5 @@ var lift_1 = require("./lift");
 exports.lift = lift_1.lift;
 var inject_1 = require("./inject");
 exports.inject = inject_1.inject;
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = rootStore;
 //# sourceMappingURL=index.js.map

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function stringHash(str) {
     var value = 5381;
     var i = str.length;
@@ -7,6 +8,5 @@ function stringHash(str) {
     }
     return (value >>> 0).toString(36);
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = stringHash;
 //# sourceMappingURL=hash.js.map

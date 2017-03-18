@@ -1,3 +1,4 @@
+/// <reference types="react" />
 import { ReplaySubject, Observable, Subscription } from 'rxjs';
 import { StatelessComponent, ComponentLifecycle } from 'react';
 import { Resource } from './inject';

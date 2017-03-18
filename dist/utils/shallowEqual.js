@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function shallowEqual(objA, objB) {
     if (objA === objB) {
         return true;
@@ -20,6 +21,5 @@ function shallowEqual(objA, objB) {
     }
     return true;
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = shallowEqual;
 //# sourceMappingURL=shallowEqual.js.map

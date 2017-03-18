@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function shallowPartialEqual(source, target) {
     var targetKeys = Object.keys(target);
     var hasOwn = Object.prototype.hasOwnProperty;
@@ -10,6 +11,5 @@ function shallowPartialEqual(source, target) {
     }
     return true;
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = shallowPartialEqual;
 //# sourceMappingURL=shallowPartialEqual.js.map
