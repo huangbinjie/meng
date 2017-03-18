@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function stringHash(str) {
-    var value = 5381;
-    var i = str.length;
+    let value = 5381;
+    let i = str.length;
     while (i) {
         value = (value * 33) ^ str.charCodeAt(--i);
     }

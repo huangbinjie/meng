@@ -1,6 +1,6 @@
 {
   "name": "meng",
-  "version": "3.1.11",
+  "version": "3.1.12",
   "description": "react unidirectional lib",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -21,10 +21,9 @@
   },
   "homepage": "https://github.com/huangbinjie/meng#readme",
   "dependencies": {
-    "@types/core-js": "^0.9.35",
     "@types/react": "^0.14.50",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",
-    "rxjs": "^5.0.0-rc.4"
+    "rxjs": "^5.2.0"
   }
 }
