@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const page1 = Array.apply(null, { length: 10 }).map((acc, x) => (1 - 1) * 10 + x + 1);
 const page2 = Array.apply(null, { length: 10 }).map((acc, x) => (2 - 1) * 10 + x + 1);
 const page3 = Array.apply(null, { length: 10 }).map((acc, x) => (3 - 1) * 10 + x + 1);

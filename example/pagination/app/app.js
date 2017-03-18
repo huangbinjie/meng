@@ -5,9 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
+Object.defineProperty(exports, "__esModule", { value: true });
 const React = require("react");
 const react_dom_1 = require("react-dom");
 const _1 = require("../../../src/");
@@ -38,7 +36,6 @@ let App = class App extends React.Component {
 };
 App = __decorate([
     _1.inject(api_1.fetchData, "lis"),
-    _1.lift({ lis: [], page: 1 }),
-    __metadata("design:paramtypes", [])
+    _1.lift({ lis: [], page: 1 })
 ], App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("root"));
