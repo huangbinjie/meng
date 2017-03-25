@@ -1,15 +1,20 @@
 import { Observable, ReplaySubject } from 'rxjs'
+import { ObservableInput } from 'rxjs/Observable'
+import symbolObservable from 'symbol-observable'
 import { Resource, Success } from './inject'
 import { ImplStore } from './'
 
 /**
- * 合并数据源
+ * 打开数据源
  */
-export function fork<S>({source$, success}: Resource, store$?: Observable<[S, S]>): Observable<S> {
+export function fork<S>({ source$, success }: Resource, store$?: Observable<[S, S]>): Observable<S> {
+    //函数数据源有可能返回undefined
+    if (source$ == void 0)
+        return Observable.never()
 
-    // stream
-    if (source$ instanceof Observable)
-        return source$.map(implSelector(success))
+    // observable
+    else if (Boolean((source$ as any)[symbolObservable]))
+        return (source$ as Observable<S>).map(implSelector(success))
 
     // Promise
     else if (source$ instanceof Promise)
@@ -26,10 +31,6 @@ export function fork<S>({source$, success}: Resource, store$?: Observable<[S, S]
     //不需要状态的函数继续执行
     else if (source$ instanceof Function && source$.length === 0)
         return fork({ source$: source$(), success }, store$)
-
-    //函数数据源有可能返回undefined
-    else if (source$ == void 0)
-        return Observable.never()
 
     else
         return Observable.of(source$).map(implSelector(success))

@@ -1,7 +1,7 @@
-import { Observable } from 'rxjs'
+import { ObservableInput } from 'rxjs/Observable'
 import { Meng } from './'
 
-export type Inject = Observable<any> | Promise<any> | (<S>(currentStore?: S, nextStore?: S) => Inject) | Object
+export type Inject = ObservableInput<any>
 
 export type Success = string | ((state: Object) => Object)
 
