@@ -1,12 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const rxjs_1 = require("rxjs");
-const symbol_observable_1 = require("symbol-observable");
 const _1 = require("./");
 function fork({ source$, success }, store$) {
     if (source$ == void 0)
         return rxjs_1.Observable.never();
-    else if (Boolean(source$[symbol_observable_1.default]))
+    else if (source$ instanceof rxjs_1.Observable)
         return source$.map(exports.implSelector(success));
     else if (source$ instanceof Promise)
         return rxjs_1.Observable.fromPromise(source$).map(exports.implSelector(success));

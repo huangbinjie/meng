@@ -1,6 +1,4 @@
 import { Observable, ReplaySubject } from 'rxjs'
-import { ObservableInput } from 'rxjs/Observable'
-import symbolObservable from 'symbol-observable'
 import { Resource, Success } from './inject'
 import { ImplStore } from './'
 
@@ -13,8 +11,8 @@ export function fork<S>({ source$, success }: Resource, store$?: Observable<[S, 
         return Observable.never()
 
     // observable
-    else if (Boolean((source$ as any)[symbolObservable]))
-        return (source$ as Observable<S>).map(implSelector(success))
+    else if (source$ instanceof Observable)
+        return source$.map(implSelector(success))
 
     // Promise
     else if (source$ instanceof Promise)
