@@ -10,16 +10,16 @@ exports.lift = (initialState = {}, initialName) => (component) => {
     return _a = class LiftedComponent extends react_1.Component {
             constructor(props) {
                 super(props);
-                const currentStore = new _1.ImplStore();
-                this.state = Object.assign({ setState: currentStore.setState }, initialState, props);
+                const mergedState = Object.assign({}, initialState, props);
+                const currentStore = new _1.ImplStore(mergedState);
+                this.state = Object.assign({ setState: currentStore.setState }, mergedState);
                 _1.default.children[displayName] = currentStore;
-                const state$ = rxjs_1.Observable.of(this.state);
                 const resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
                 const parts = resource$.partition(resource => resource.source$ instanceof Function && resource.source$.length > 0);
                 const asyncResource = parts[1].map(source => fork_1.fork(source));
                 const asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
                 const store$ = currentStore.state$
-                    .merge(state$, asyncResource$)
+                    .merge(asyncResource$)
                     .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
                     .publishReplay(2)
                     .refCount()
