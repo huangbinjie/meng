@@ -20,14 +20,14 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
     public constructor(props: P) {
       super(props)
-      //创建自己的store
-      const currentStore = new ImplStore()
-      // 初始化state，并且和并props到state
-      this.state = Object.assign(<T>{ setState: currentStore.setState }, initialState, props)
-      //把自己的store挂在全局store里面
-      rootStore.children[displayName] = currentStore
 
-      const state$ = Observable.of(this.state)
+      const mergedState = Object.assign({}, initialState, props)
+
+      const currentStore = new ImplStore(mergedState)
+
+      this.state = Object.assign(<T>{ setState: currentStore.setState }, mergedState)
+
+      rootStore.children[displayName] = currentStore
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -39,7 +39,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
       const store$ =
         currentStore.state$
-          .merge(state$, asyncResource$)
+          .merge(asyncResource$)
           .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
           .publishReplay(2)
           .refCount()
