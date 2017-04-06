@@ -21,8 +21,6 @@ exports.lift = (initialState = {}, initialName) => (component) => {
                 const store$ = currentStore.state$
                     .merge(asyncResource$)
                     .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
-                    .publishReplay(2)
-                    .refCount()
                     .pairwise();
                 const listenResource = parts[0].map(source => fork_1.fork.call(this, source, store$));
                 const listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
