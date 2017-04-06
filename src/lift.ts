@@ -41,8 +41,6 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
         currentStore.state$
           .merge(asyncResource$)
           .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
-          .publishReplay(2)
-          .refCount()
           .pairwise()
 
       const listenResource = parts[0].map(source => fork.call(this, source, store$))
