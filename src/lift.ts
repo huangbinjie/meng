@@ -42,6 +42,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
           .merge(asyncResource$)
           .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
           .pairwise()
+          .share()
 
       const listenResource = parts[0].map(source => fork.call(this, source, store$))
 
