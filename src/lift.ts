@@ -33,23 +33,27 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
       const parts = resource$.partition(resource => resource.source$ instanceof Function && resource.source$.length > 0)
 
-      const asyncResource = parts[1].map(source => fork(source))
-
-      const asyncResource$ = Observable.from(asyncResource).mergeAll()
+      const asyncResource$ = parts[1].map(source => fork(source)).mergeAll()
 
       const store$ =
         currentStore.state$
           .merge(asyncResource$)
           .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
+          // buffer数据源，至少有2个state才继续往下走，那么它和share的区别是什么？
+          // publishReplay(2) = multicast(() => new ReplaySubject(2))
+          // 在refCount之后，所有的observer都是订阅的这个ReplaySubject，直到最后一个订阅被释放这个时候
+          // 这个hotObservable，也就是这段注释之前的数据源才会被释放掉。
+          // 而share不一样，share是在数据源是同步的时候会在subscriber close之后释放掉subscription，如果
+          // 第一次subscribe没被释放(eg. interval)，之后的subscribe发现subscription还在就会共用这个subscription(fromPromise好像有bug)
+          // ，这个时候share()才表现得和multicast().refCount()差不多。而这里的数据源是ReplaySubject(initialState)，
+          // 是个同步的任务，所以被释放掉了，之后watch的就再也订阅不了了。注意share !== publish().refCount()
+          .publishReplay(2)
+          .refCount()
           .pairwise()
-          .share()
 
-      const listenResource = parts[0].map(source => fork.call(this, source, store$))
+      const listenResource$ = parts[0].map(source => fork.call(this, source, store$)).mergeAll()
 
-      //如果是from([]).mergeAll(),这条流会自动关闭，不用担心会emit一个空数组
-      const listenResource$ = Observable.from(listenResource).mergeAll()
-
-      currentStore.store$ = store$.map(pairstore => pairstore[1]).merge(listenResource$).scan((nextStore, nextStoreOrState) => Object.assign(nextStore, nextStoreOrState))
+      currentStore.store$ = store$.map(pairstore => pairstore[1]).merge(listenResource$)
 
     }
 

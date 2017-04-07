@@ -16,16 +16,15 @@ exports.lift = (initialState = {}, initialName) => (component) => {
                 _1.default.children[displayName] = currentStore;
                 const resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
                 const parts = resource$.partition(resource => resource.source$ instanceof Function && resource.source$.length > 0);
-                const asyncResource = parts[1].map(source => fork_1.fork(source));
-                const asyncResource$ = rxjs_1.Observable.from(asyncResource).mergeAll();
+                const asyncResource$ = parts[1].map(source => fork_1.fork(source)).mergeAll();
                 const store$ = currentStore.state$
                     .merge(asyncResource$)
                     .scan((currentStore, nextState) => Object.assign({}, currentStore, nextState))
-                    .pairwise()
-                    .share();
-                const listenResource = parts[0].map(source => fork_1.fork.call(this, source, store$));
-                const listenResource$ = rxjs_1.Observable.from(listenResource).mergeAll();
-                currentStore.store$ = store$.map(pairstore => pairstore[1]).merge(listenResource$).scan((nextStore, nextStoreOrState) => Object.assign(nextStore, nextStoreOrState));
+                    .publishReplay(2)
+                    .refCount()
+                    .pairwise();
+                const listenResource$ = parts[0].map(source => fork_1.fork.call(this, source, store$)).mergeAll();
+                currentStore.store$ = store$.map(pairstore => pairstore[1]).merge(listenResource$);
             }
             componentWillUnmount() {
                 _1.default.children[displayName] = null;
