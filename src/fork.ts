@@ -24,7 +24,7 @@ export function fork<S>({ source$, success }: Resource, store$?: Observable<[S, 
 
     //function，需要状态的函数换需要监听store$
     else if (source$ instanceof Function && source$.length > 0)
-        return store$.flatMap(pairstore => fork({ source$: source$(pairstore[0], pairstore[1]), success }, store$))
+        return store$!.flatMap(pairstore => fork({ source$: source$(pairstore[0], pairstore[1]), success }, store$))
 
     //不需要状态的函数继续执行
     else if (source$ instanceof Function && source$.length === 0)

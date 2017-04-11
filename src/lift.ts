@@ -1,6 +1,6 @@
 import { Resource } from './inject'
-import { Component, ComponentClass, createElement } from 'react'
-import rootStore, { Meng, ImplStore } from './'
+import { Component, StatelessComponent, ComponentClass, createElement } from 'react'
+import rootStore, { ImplStore } from './'
 import { Observable, Subscription } from 'rxjs'
 import { fork, combineLatestSelector } from './fork'
 import shallowEqual from './utils/shallowEqual'
@@ -10,10 +10,10 @@ export type State = {
   callback?: () => void
 }
 
-export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialName?: string) => (component: Meng.Component<P> | Meng.Stateless<P>): any => {
+export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialName?: string) => (component: ComponentClass<P> | StatelessComponent<P>): any => {
   const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
   return class LiftedComponent extends Component<P, T> {
-    static displayName = `Meng(${displayName})`
+    static displayName = `Meng1(${displayName})`
     static resource: Resource[] = []
     private hasStoreStateChanged: Boolean
     private subscription: Subscription
@@ -27,7 +27,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
       this.state = Object.assign(<T>{ setState: currentStore.setState }, mergedState)
 
-      rootStore.children[displayName] = currentStore
+      rootStore.children.displayName = currentStore
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -58,13 +58,13 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
     }
 
     public componentWillUnmount() {
-      rootStore.children[displayName] = null
+      delete rootStore.children.displayName
       this.hasStoreStateChanged = false
       this.subscription.unsubscribe()
     }
 
     public componentWillReceiveProps(nextProps: P) {
-      rootStore.children[displayName].setState(nextProps)
+      rootStore.children.displayName.setState(nextProps)
     }
 
     /**
@@ -73,7 +73,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
      * 所以在didmount监听和订阅
      */
     public componentDidMount() {
-      const currentStore = rootStore.children[displayName]
+      const currentStore = rootStore.children.displayName
       this.subscription =
         currentStore.store$
           .filter(store => !shallowEqual(this.state, store))
@@ -91,7 +91,7 @@ export const lift = <P, S, T extends S & State>(initialState = <S>{}, initialNam
 
     public render() {
       this.hasStoreStateChanged = false
-      return createElement(component as ComponentClass<P>, <T & P>this.state)
+      return createElement(component as any, <T & P>this.state)
     }
 
   }

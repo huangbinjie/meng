@@ -11,21 +11,6 @@ export interface Store<S> {
     subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
 }
 
-export namespace Meng {
-    export interface Component<P> extends ComponentLifecycle<P, void> {
-        displayName?: string
-        name?: string
-        resource?: [Resource],
-        prototype: {}
-    }
-
-    export interface Stateless<P> extends StatelessComponent<P> {
-        displayName?: string
-        name?: string
-        resource?: [Resource]
-    }
-}
-
 /**
  * ImplStore
  * all store should instanceof this class
