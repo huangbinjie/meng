@@ -1,1 +1,0 @@
-{"version":3,"file":"inject.js","sourceRoot":"","sources":["../src/inject.ts"],"names":[],"mappings":";;AASa,QAAA,MAAM,GAAG,CAAC,OAAe,EAAE,OAAgB,KACtD,CAAO,SAAgD;IACrD,SAAS,CAAC,QAAQ,CAAC,IAAI,CAAC,EAAE,OAAO,EAAE,OAAO,EAAE,CAAC,CAAA;IAC7C,MAAM,CAAC,SAAS,CAAA;AAClB,CAAC,CAAA"}
