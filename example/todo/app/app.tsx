@@ -4,6 +4,15 @@ import Store, { lift, inject } from '../../../src'
 window["Store"] = Store
 import { getByCache } from './app.api'
 
+type Props = {
+    list: {
+        status: string
+        value: string
+    }[]
+    display: string
+    setState(state: object, cb: () => void): void
+}
+
 @inject((currentStore, nextStore) => {
     // console.log(currentStore)
     // console.log(nextStore)
@@ -11,7 +20,7 @@ import { getByCache } from './app.api'
         return Promise.resolve(nextStore.p1 + 2)
 }, "p2")
 @inject(() => Promise.resolve(1), "p1")
-// @inject(Store, "rootStore")
+@inject(Store, "rootStore")
 @inject(getByCache, cache => cache === null ? {} : cache)
 @lift({ list: [], display: "all" })
 class App extends React.Component<any, void> {
@@ -90,7 +99,7 @@ const filter = display => li => {
     if (li.status === display) return true
 }
 
-const ActiveItem = ({index, data, toggle, destroy}) =>
+const ActiveItem = ({ index, data, toggle, destroy }) =>
     <li>
         <div className="view">
             <input className="toggle" type="checkbox" onChange={toggle(data, index)} />
@@ -100,7 +109,7 @@ const ActiveItem = ({index, data, toggle, destroy}) =>
         <input className="edit" defaultValue="Rule the web" />
     </li>
 
-const CompletedItem = ({index, data, toggle, destroy}) =>
+const CompletedItem = ({ index, data, toggle, destroy }) =>
     <li className="completed">
         <div className="view">
             <input className="toggle" type="checkbox" onChange={toggle(data, index)} checked />
