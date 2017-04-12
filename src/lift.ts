@@ -11,9 +11,9 @@ export type State = {
 }
 
 export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialName?: string) => (component: ComponentClass<P> | StatelessComponent<P>): any => {
-  const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
+  const _displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
   return class LiftedComponent extends Component<P, T> {
-    static displayName = `Meng1(${displayName})`
+    static displayName = `Meng(${_displayName})`
     static resource: Resource[] = []
     private hasStoreStateChanged: Boolean
     private subscription: Subscription
@@ -27,7 +27,7 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
 
       this.state = Object.assign(<T>{ setState: currentStore.setState }, mergedState)
 
-      rootStore.children[displayName] = currentStore
+      rootStore.children[_displayName] = currentStore
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -58,13 +58,13 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
     }
 
     public componentWillUnmount() {
-      delete rootStore.children[displayName]
+      delete rootStore.children[_displayName]
       this.hasStoreStateChanged = false
       this.subscription.unsubscribe()
     }
 
     public componentWillReceiveProps(nextProps: P) {
-      rootStore.children[displayName].setState(nextProps)
+      rootStore.children[_displayName].setState(nextProps)
     }
 
     /**
@@ -73,7 +73,7 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
      * 所以在didmount监听和订阅
      */
     public componentDidMount() {
-      const currentStore = rootStore.children[displayName]
+      const currentStore = rootStore.children[_displayName]
       this.subscription =
         currentStore.store$
           .filter(store => !shallowEqual(this.state, store))
