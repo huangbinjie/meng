@@ -26,7 +26,7 @@ exports.lift = function (initialState, initialName) {
                     var mergedState = Object.assign({}, initialState, props);
                     var currentStore = new _1.ImplStore(mergedState);
                     _this.state = Object.assign({ setState: currentStore.setState }, mergedState);
-                    _1.default.children.displayName = currentStore;
+                    _1.default.children[displayName] = currentStore;
                     var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
                     var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
                     var asyncResource$ = parts[1].map(function (source) { return fork_1.fork(source); }).mergeAll();
@@ -41,16 +41,16 @@ exports.lift = function (initialState, initialName) {
                     return _this;
                 }
                 LiftedComponent.prototype.componentWillUnmount = function () {
-                    delete _1.default.children.displayName;
+                    delete _1.default.children[displayName];
                     this.hasStoreStateChanged = false;
                     this.subscription.unsubscribe();
                 };
                 LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
-                    _1.default.children.displayName.setState(nextProps);
+                    _1.default.children[displayName].setState(nextProps);
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
                     var _this = this;
-                    var currentStore = _1.default.children.displayName;
+                    var currentStore = _1.default.children[displayName];
                     this.subscription =
                         currentStore.store$
                             .filter(function (store) { return !shallowEqual_1.default(_this.state, store); })
