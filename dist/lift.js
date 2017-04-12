@@ -18,7 +18,7 @@ var shallowEqual_1 = require("./utils/shallowEqual");
 exports.lift = function (initialState, initialName) {
     if (initialState === void 0) { initialState = {}; }
     return function (component) {
-        var displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
+        var _displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
         return _a = (function (_super) {
                 __extends(LiftedComponent, _super);
                 function LiftedComponent(props) {
@@ -26,7 +26,7 @@ exports.lift = function (initialState, initialName) {
                     var mergedState = Object.assign({}, initialState, props);
                     var currentStore = new _1.ImplStore(mergedState);
                     _this.state = Object.assign({ setState: currentStore.setState }, mergedState);
-                    _1.default.children[displayName] = currentStore;
+                    _1.default.children[_displayName] = currentStore;
                     var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
                     var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
                     var asyncResource$ = parts[1].map(function (source) { return fork_1.fork(source); }).mergeAll();
@@ -41,16 +41,16 @@ exports.lift = function (initialState, initialName) {
                     return _this;
                 }
                 LiftedComponent.prototype.componentWillUnmount = function () {
-                    delete _1.default.children[displayName];
+                    delete _1.default.children[_displayName];
                     this.hasStoreStateChanged = false;
                     this.subscription.unsubscribe();
                 };
                 LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
-                    _1.default.children[displayName].setState(nextProps);
+                    _1.default.children[_displayName].setState(nextProps);
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
                     var _this = this;
-                    var currentStore = _1.default.children[displayName];
+                    var currentStore = _1.default.children[_displayName];
                     this.subscription =
                         currentStore.store$
                             .filter(function (store) { return !shallowEqual_1.default(_this.state, store); })
@@ -70,7 +70,7 @@ exports.lift = function (initialState, initialName) {
                 };
                 return LiftedComponent;
             }(react_1.Component)),
-            _a.displayName = "Meng1(" + displayName + ")",
+            _a.displayName = "Meng(" + _displayName + ")",
             _a.resource = [],
             _a;
         var _a;
