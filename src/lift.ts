@@ -27,7 +27,7 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
 
       this.state = Object.assign(<T>{ setState: currentStore.setState }, mergedState)
 
-      rootStore.children.displayName = currentStore
+      rootStore.children[displayName] = currentStore
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -58,13 +58,13 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
     }
 
     public componentWillUnmount() {
-      delete rootStore.children.displayName
+      delete rootStore.children[displayName]
       this.hasStoreStateChanged = false
       this.subscription.unsubscribe()
     }
 
     public componentWillReceiveProps(nextProps: P) {
-      rootStore.children.displayName.setState(nextProps)
+      rootStore.children[displayName].setState(nextProps)
     }
 
     /**
@@ -73,7 +73,7 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
      * 所以在didmount监听和订阅
      */
     public componentDidMount() {
-      const currentStore = rootStore.children.displayName
+      const currentStore = rootStore.children[displayName]
       this.subscription =
         currentStore.store$
           .filter(store => !shallowEqual(this.state, store))
