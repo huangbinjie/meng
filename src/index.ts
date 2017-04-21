@@ -1,6 +1,5 @@
 import { ReplaySubject, Observable, Subscription } from "rxjs"
 import { StatelessComponent, ComponentLifecycle } from "react"
-import { Resource } from "./inject"
 import shallowPartialEqual from "./utils/shallowPartialEqual"
 
 export interface IStore<S> {
@@ -29,11 +28,10 @@ export class ImplStore<S> implements IStore<S> {
     }
     public subscribe = (success: (state: S & { _callback?: () => void }) => void, error?: (error: Error) => void, complete?: () => void) => {
         return this.store$.subscribe(store => {
-            if (store._callback) {
-                store._callback()
-                delete store._callback
-            }
+            const callback = store._callback || (() => { })
+            delete store._callback
             success(store)
+            callback()
         }, error, complete)
     }
 
@@ -42,6 +40,6 @@ export class ImplStore<S> implements IStore<S> {
 const rootStore = new ImplStore()
 
 export { lift } from "./lift"
-export { inject } from "./inject"
+export { inject, listen } from "./inject"
 
 export default rootStore

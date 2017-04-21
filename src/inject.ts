@@ -1,14 +1,24 @@
-import { ObservableInput } from 'rxjs/Observable'
-import { ComponentClass } from 'react'
+import { ObservableInput } from "rxjs/Observable"
+import { ComponentClass } from "react"
 
-export type Inject = ObservableInput<any>
+export type Inject = ObservableInput<Object> | (() => any) | Object
 
-export type Success = string | ((state: Object) => Object)
+export type Listen<S> = (currentStore: Partial<S>, nextStore: Partial<S>) => Inject
 
-export type Resource = { source$: Inject, success: Success }
+export type Success = string | ((state: object) => object)
 
-export const inject = (source$: Inject, success: Success) =>
-  <P, S>(component: ComponentClass<P>): any => {
-    (component as any).resource.push({ source$, success })
+export type AsyncResource = { source$: Inject, success: Success }
+
+export type ListenResource<S> = { source$: Listen<S>, success: Success }
+
+export const inject = <S>(source$: Inject, success: Success) =>
+  <S>(component: ComponentClass<S>): any => {
+    (component as any).asyncResource.push({ source$, success })
+    return component
+  }
+
+export const listen = <S>(source$: Listen<S>, success: Success) =>
+  <S>(component: ComponentClass<S>): any => {
+    (component as any).listenResource.push({ source$, success })
     return component
   }
