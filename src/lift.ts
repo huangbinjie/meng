@@ -1,20 +1,25 @@
-import { Resource } from './inject'
-import { Component, StatelessComponent, ComponentClass, createElement } from 'react'
-import rootStore, { ImplStore } from './'
-import { Observable, Subscription } from 'rxjs'
-import { fork, combineLatestSelector } from './fork'
-import shallowEqual from './utils/shallowEqual'
+import { Resource } from "./inject"
+import { Component, StatelessComponent, ComponentClass, createElement } from "react"
+import rootStore, { ImplStore } from "./"
+import { Observable, Subscription } from "rxjs"
+import { fork, combineLatestSelector } from "./fork"
+import shallowEqual from "./utils/shallowEqual"
 
-export type State = {
-  setState: (nextState: Object, callback?: () => void) => void
-  callback?: () => void
+export type Extral<M> = {
+  setState: (nextState: Partial<M>, callback?: () => void) => void
+  _callback?: () => void
 }
 
-export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialName?: string) => (component: ComponentClass<P> | StatelessComponent<P>): any => {
-  const _displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
-  return class LiftedComponent extends Component<P, T> {
-    static displayName = `Meng(${_displayName})`
-    static resource: Resource[] = []
+/** 
+ * P: props--父级传下来的
+ * S: state-- state$的数据类型
+ * M: store-- store$的数据类型，也就是最终类型 M 继承了P和S和meng需要用到的的Extral<M>
+ */
+export const lift = <P, S, M extends S & P & Extral<M>>(initialState = {} as S, initialName?: string) => (component: ComponentClass<Partial<M>> | StatelessComponent<Partial<M>>): any => {
+  const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
+  return class LiftedComponent extends Component<P, M> {
+    private static displayName = `Meng(${displayName})`
+    private static resource: Resource[] = []
     private hasStoreStateChanged: Boolean
     private subscription: Subscription
 
@@ -25,9 +30,9 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
 
       const currentStore = new ImplStore(mergedState)
 
-      this.state = Object.assign(<T>{ setState: currentStore.setState }, mergedState)
+      this.state = Object.assign({ setState: currentStore.setState }, mergedState) as M
 
-      rootStore.children[_displayName] = currentStore
+      rootStore.children[displayName] = currentStore
 
       const resource$ = Observable.from(LiftedComponent.resource)
 
@@ -58,13 +63,13 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
     }
 
     public componentWillUnmount() {
-      delete rootStore.children[_displayName]
+      delete rootStore.children[displayName]
       this.hasStoreStateChanged = false
       this.subscription.unsubscribe()
     }
 
     public componentWillReceiveProps(nextProps: P) {
-      rootStore.children[_displayName].setState(nextProps)
+      rootStore.children[displayName].setState(nextProps)
     }
 
     /**
@@ -73,14 +78,14 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
      * 所以在didmount监听和订阅
      */
     public componentDidMount() {
-      const currentStore = rootStore.children[_displayName]
+      const currentStore = rootStore.children[displayName]
       this.subscription =
         currentStore.store$
           .filter(store => !shallowEqual(this.state, store))
-          .subscribe((state: T) => {
+          .subscribe((state: M & Extral<M>) => {
             this.hasStoreStateChanged = true
-            const callback = state.callback || (() => { })
-            delete state.callback
+            const callback = state._callback || (() => { })
+            delete state._callback
             this.setState(state, callback)
           })
     }
@@ -91,7 +96,7 @@ export const lift = <P, S, T extends S & State>(initialState = <P>{}, initialNam
 
     public render() {
       this.hasStoreStateChanged = false
-      return createElement(component as any, <T & P>this.state)
+      return createElement(component as ComponentClass<M>, this.state as M)
     }
 
   }

@@ -5,7 +5,10 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build_test": "rm -fr _test && tsc -p test/",
+    "clean_test": "rm -fr _test",
+    "test_ava": "ava _test/test/",
+    "test": "npm-run-all build_test test_ava clean_test"
   },
   "repository": {
     "type": "git",
@@ -24,7 +27,14 @@
     "rxjs": "^5.2.0"
   },
   "devDependencies": {
-    "@types/react": "^15.0.16"
+    "@types/enzyme": "^2.7.9",
+    "@types/react": "^15.0.16",
+    "@types/react-dom": "^15.5.0",
+    "@types/tape": "^4.2.29",
+    "ava": "^0.19.1",
+    "enzyme": "^2.8.2",
+    "npm-run-all": "^4.0.2",
+    "react-addons-test-utils": "^15.5.1"
   },
   "peerDependencies": {
     "react": "^15.1.0",

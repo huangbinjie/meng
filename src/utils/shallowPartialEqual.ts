@@ -1,10 +1,11 @@
 export default function shallowPartialEqual(source: any, target: any) {
-  const targetKeys = Object.keys(target)
+  // 防止可能有callback导致都通过
+  const targetKeys = Object.keys(target).filter(key => key !== "_callback")
 
   const hasOwn = Object.prototype.hasOwnProperty
-  for (let i = 0; i < targetKeys.length; i++) {
-    if (!hasOwn.call(source, targetKeys[i]) ||
-      source[targetKeys[i]] !== target[targetKeys[i]]) {
+  for (let targeKey of targetKeys) {
+    if (!hasOwn.call(source, targeKey) ||
+      source[targeKey] !== target[targeKey]) {
       return false
     }
   }

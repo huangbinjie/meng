@@ -1,0 +1,40 @@
+{
+	"extends": [
+		"tslint:latest"
+	],
+	"rules": {
+		"arrow-parens": false,
+		"max-line-length": [
+			150
+		],
+		"max-classes-per-file": [
+			false
+		],
+		"no-empty": false,
+		"ordered-imports": [
+			false
+		],
+		"quotemark": [
+			true,
+			"double",
+			"jsx-double",
+			"avoid-escape"
+		],
+		"semicolon": [
+			true,
+			"never"
+		],
+		"indent": [
+			true,
+			"space"
+		],
+		"one-line": [
+			"check-else"
+		],
+		"curly": false,
+		"trailing-comma": [
+			false
+		],
+		"object-literal-sort-keys": false
+	}
+}
