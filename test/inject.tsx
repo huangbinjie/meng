@@ -170,3 +170,46 @@ test.cb("listen resource can listen other async resource", t => {
 	}, 3000)
 })
 
+test.cb("test with router", t => {
+	class Parent extends React.Component<any, any> {
+		public state = { path: "/product/1" }
+		public componentDidMount() {
+			// let me simulate a route changed action
+			setTimeout(() => this.setState({ path: "/product/2" }), 1000)
+		}
+		public render() {
+			const productId = this.state.path.match(/\/.+\/(\d)/)[1]
+			return <Child productionId={productId} />
+		}
+	}
+
+	type ChildProps = { productionId: string, production?: { id: number, name: string } }
+	@listen<ChildProps>((currentStore, nextStore) => currentStore.productionId !== nextStore.productionId ? fetch(nextStore.productionId) : null, "production")
+	@lift({ production: {} })
+	class Child extends React.Component<ChildProps, any> {
+		public render() {
+			return <div>
+				{this.props.production ? this.props.production.name : null}
+			</div>
+		}
+	}
+
+	const fetch = (pid: string) => {
+		return new Promise((resolve, reject) => resolve([
+			{ id: 1, name: "xxx" },
+			{ id: 2, name: "yyy" }
+		].find(arr => arr.id === +pid)))
+	}
+
+	const wrapper = mount(<Parent />)
+
+	t.is(wrapper.first().text(), "")
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "xxx")
+	}, 100)
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "yyy")
+		t.end()
+	}, 2000)
+})
+

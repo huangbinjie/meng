@@ -30,13 +30,13 @@ export const lift =
         public constructor(props: P) {
           super(props)
 
-          const currentStore = new ImplStore(props)
+          const currentStore = new ImplStore()
 
           this.state = Object.assign({ setState: currentStore.setState }, props) as M
 
           rootStore.children[displayName] = currentStore
 
-          const state$ = Observable.of(Object.assign({}, initialState))
+          const state$ = Observable.of(Object.assign({}, props, initialState))
 
           const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync(source)).mergeAll()
 

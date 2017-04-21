@@ -66,7 +66,7 @@ test.cb("lifted component can receive data both props and store", t => {
 	setTimeout(() => {
 		t.is(wrapper.first().text(), "21")
 		t.end()
-	}, 0)
+	}, 500)
 })
 
 test("lifted component should inject store to rootStore's children", t => {
