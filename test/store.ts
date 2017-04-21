@@ -63,16 +63,13 @@ test("setState callback should work", t => {
 })
 
 test("shallow equal should exclude _callback", t => {
-	t.plan(1)
+	t.plan(2)
 	const Store = new ImplStore<{ a: number }>({ a: 1 })
 	Store.setState({ a: 2 }, () => {
 		t.pass()
 	})
 
-	Store.subscribe((state) => {
-		if (state._callback) state._callback()
-	})
-	Store.setState({ a: 2 }, () => {
-		t.pass()
-	})
+	Store.subscribe(() => { t.pass() })
+	Store.setState({ a: 2 }, t.pass)
+	Store.setState({ a: 2 })
 })

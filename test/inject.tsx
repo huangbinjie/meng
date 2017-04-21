@@ -1,0 +1,172 @@
+import "jsdom-global/register"
+import test from "ava"
+import * as React from "react"
+import { Observable } from "rxjs"
+import { mount } from "enzyme"
+import Store, { ImplStore, lift, inject, listen } from "../src"
+
+test.cb("inject promise", t => {
+	const api = new Promise((v, r) => setTimeout(() => v(1), 1000))
+	@inject(api, "b")
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			return <div>{this.props.a}{this.props.b}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "21")
+		t.end()
+	}, 1000)
+})
+
+test.cb("inject observable", t => {
+	const api = Observable.of(1)
+	@inject(api, "b")
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			return <div>{this.props.a}{this.props.b}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "21")
+		t.end()
+	}, 1000)
+})
+
+test("inject store", t => {
+	Store.setState({ userinfo: { name: "corol" } })
+
+	@inject(Store, (store: any) => ({ name: store.userinfo.name }))
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			return <div>{this.props.a}{this.props.name}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	t.is(wrapper.first().text(), "2corol")
+})
+
+test("inject function", t => {
+	@inject(() => 1, "b")
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			return <div>{this.props.a}{this.props.b}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	t.is(wrapper.first().text(), "21")
+})
+
+test("inject curry func", t => {
+	const api = Observable.of(1)
+	@inject(() => () => () => api, "b")
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			return <div>{this.props.a}{this.props.b}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	t.is(wrapper.first().text(), "21")
+})
+
+test.cb("inject an valid async factor should rerender component", t => {
+	let count = 0
+	const api = new Promise((v, r) => setTimeout(() => v(1), 1000))
+	@inject(() => api, "c")
+	@inject(() => 1, "b")
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			++count
+			return <div>{this.props.a}{this.props.b}{this.props.c}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "211")
+		t.is(count, 3)
+		t.end()
+	}, 2000)
+})
+
+test.cb("inject null or undefined should do nothing", t => {
+	let count = 0
+	@inject(() => null, "c")
+	@inject(() => Observable.of(1), "b")
+	@lift({ a: 2 })
+	class App extends React.Component<any, any>{
+		public render() {
+			count++
+			return <div>{this.props.a}{this.props.b}{this.props.c}</div>
+		}
+	}
+
+	const wrapper = mount(<App />)
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "21")
+		t.is(count, 2)
+		t.end()
+	}, 1000)
+})
+
+test.cb("listen resource should listen lift", t => {
+	const api = new Promise((v, r) => setTimeout(() => v(1), 1000))
+	type Props = {
+		a?: number
+		b: 2
+	}
+	@listen<Props>((currentStore, nextStore) => nextStore.a === 2 ? api : null, "b")
+	@lift({ a: 2 })
+	class App extends React.Component<Props, void>{
+		public render() {
+			return <div>{this.props.a}{this.props.b}</div>
+		}
+	}
+	const wrapper = mount(<App b={2} />)
+	t.is(wrapper.first().text(), "22")
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "21")
+		t.end()
+	}, 1000)
+})
+
+test.cb("listen resource can listen other async resource", t => {
+	let count = 0
+	const api2 = new Promise((v, r) => setTimeout(() => v(2), 1000))
+	const api4 = new Promise((v, r) => setTimeout(() => v(4), 1000))
+	type Props = {
+		a?: number
+		b?: number
+		c?: number
+	}
+	@listen<Props>((currentStore, nextStore) => nextStore.b === 2 ? api4 : null, "c")
+	@inject(api2, "b")
+	@lift({ a: 2, b: 1 })
+	class App extends React.Component<Props, void>{
+		public render() {
+			++count
+			return <div>{this.props.a}{this.props.b}{this.props.c}</div>
+		}
+	}
+	const wrapper = mount(<App />)
+	t.is(wrapper.first().text(), "21")
+	setTimeout(() => {
+		t.is(count, 4)
+		t.is(wrapper.first().text(), "224")
+		t.end()
+	}, 3000)
+})
+
