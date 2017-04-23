@@ -102,8 +102,8 @@ test("setState's callback should work", t => {
 	@lift({ a: 2 })
 	class StatefullApp extends React.Component<{ a?: number, setState?: (state: object, cb?: () => void) => {} }, void> {
 		public componentDidMount() {
-			this.props.setState({ a: 3 }, () => {
-				this.props.setState({ a: 4 })
+			Store.children.StatefullApp.setState({ a: 3 }, () => {
+				Store.children.StatefullApp.setState({ a: 4 })
 			})
 		}
 		public render() {
@@ -115,6 +115,23 @@ test("setState's callback should work", t => {
 })
 
 test.cb("lifted store's subscribe should work", t => {
+	t.plan(3)
+	@lift({ a: 2 })
+	class StatefullApp extends React.Component<{ a?: number }, void> {
+		public render() {
+			return <div>{this.props.a}</div>
+		}
+	}
+	const wrapper = mount(<StatefullApp />)
+	Store.children.StatefullApp.subscribe((store: { a?: number }) => {
+		t.deepEqual(store, { a: 2 })
+		t.pass()
+		t.end()
+	})
+	t.is(wrapper.first().text(), "2")
+})
+
+test("callback should not affect shallowEqual", t => {
 	t.plan(2)
 	@lift({ a: 2 })
 	class StatefullApp extends React.Component<{ a?: number }, void> {
@@ -123,9 +140,14 @@ test.cb("lifted store's subscribe should work", t => {
 		}
 	}
 	const wrapper = mount(<StatefullApp />)
-	Store.children.StatefullApp.subscribe(store => {
+	Store.children.StatefullApp.setState({ a: 2 }, () => {
 		t.pass()
-		t.end()
 	})
-	t.is(wrapper.first().text(), "2")
+	Store.children.StatefullApp.setState({ a: 2 }, () => {
+		t.pass()
+	})
+	Store.children.StatefullApp.setState({ a: 3 }, () => {
+		t.pass()
+	})
+	t.is(wrapper.first().text(), "3")
 })

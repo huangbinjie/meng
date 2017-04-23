@@ -212,4 +212,3 @@ test.cb("test with router", t => {
 		t.end()
 	}, 2000)
 })
-

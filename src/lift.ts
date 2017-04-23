@@ -30,9 +30,9 @@ export const lift =
         public constructor(props: P) {
           super(props)
 
-          const currentStore = new ImplStore()
+          this.state = props as M
 
-          this.state = Object.assign({ setState: currentStore.setState }, props) as M
+          const currentStore = new ImplStore()
 
           rootStore.children[displayName] = currentStore
 
