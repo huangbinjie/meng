@@ -24,7 +24,7 @@ test("lift stateless component", t => {
 	t.is(wrapper.first().text(), "1")
 })
 
-test.cb("state should be asynchronous", t => {
+test.cb("lift state should be synchronous", t => {
 	t.plan(2)
 	type Props = {
 		b?: number
@@ -33,7 +33,7 @@ test.cb("state should be asynchronous", t => {
 	@lift({ a: 2, b: 1 })
 	class StatefullApp extends React.Component<Props, void> {
 		public componentDidMount() {
-			t.is(this.props.b, undefined)
+			t.is(this.props.b, 1)
 		}
 		public render() {
 			return <div>{this.props.b}</div>
@@ -86,7 +86,7 @@ test("lifted component should inject store to rootStore's children", t => {
 	t.truthy(Store.children.StatefullApp)
 })
 
-test("lifted component's store can be set at any scope", t => {
+test.cb("lifted component's store can be set at any scope", t => {
 	@lift({ a: 2 })
 	class StatefullApp extends React.Component<{ a?: number }, void> {
 		public render() {
@@ -94,24 +94,31 @@ test("lifted component's store can be set at any scope", t => {
 		}
 	}
 	const wrapper = mount(<StatefullApp />)
-	Store.children.StatefullApp.setState({ a: 2333 })
-	t.is(wrapper.first().text(), "2333")
+	Store.children.StatefullApp.setState({ a: 2333 }, () => {
+		t.is(wrapper.first().text(), "2333")
+		t.end()
+	})
 })
 
-test("setState's callback should work", t => {
+test.cb("setState's callback should work", t => {
 	@lift({ a: 2 })
-	class StatefullApp extends React.Component<{ a?: number, setState?: (state: object, cb?: () => void) => {} }, void> {
+	class StatefullApp1 extends React.Component<{ a?: number, setState?: (state: object, cb?: () => void) => {} }, void> {
 		public componentDidMount() {
-			Store.children.StatefullApp.setState({ a: 3 }, () => {
-				Store.children.StatefullApp.setState({ a: 4 })
-			})
+			setTimeout(() => {
+				Store.children.StatefullApp1.setState({ a: 3 }, () => {
+					Store.children.StatefullApp1.setState({ a: 4 })
+				})
+			}, 500)
 		}
 		public render() {
 			return <div>{this.props.a}</div>
 		}
 	}
-	const wrapper = mount(<StatefullApp />)
-	t.is(wrapper.first().text(), "4")
+	const wrapper = mount(<StatefullApp1 />)
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "4")
+		t.end()
+	}, 1000)
 })
 
 test.cb("lifted store's subscribe should work", t => {

@@ -6,7 +6,7 @@ import { mount } from "enzyme"
 import Store, { ImplStore, lift, inject, listen } from "../src"
 
 test.cb("inject promise", t => {
-	const api = new Promise((v, r) => setTimeout(() => v(1), 1000))
+	const api = new Promise((v, r) => setTimeout(() => v(1), 500))
 	@inject(api, "b")
 	@lift({ a: 2 })
 	class App extends React.Component<any, any>{
@@ -39,7 +39,7 @@ test.cb("inject observable", t => {
 	}, 1000)
 })
 
-test("inject store", t => {
+test.cb("inject store", t => {
 	Store.setState({ userinfo: { name: "corol" } })
 
 	@inject(Store, (store: any) => ({ name: store.userinfo.name }))
@@ -51,10 +51,13 @@ test("inject store", t => {
 	}
 
 	const wrapper = mount(<App />)
-	t.is(wrapper.first().text(), "2corol")
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "2corol")
+		t.end()
+	}, 1000)
 })
 
-test("inject function", t => {
+test.cb("inject function", t => {
 	@inject(() => 1, "b")
 	@lift({ a: 2 })
 	class App extends React.Component<any, any>{
@@ -64,10 +67,13 @@ test("inject function", t => {
 	}
 
 	const wrapper = mount(<App />)
-	t.is(wrapper.first().text(), "21")
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "21")
+		t.end()
+	}, 1000)
 })
 
-test("inject curry func", t => {
+test.cb("inject curry func", t => {
 	const api = Observable.of(1)
 	@inject(() => () => () => api, "b")
 	@lift({ a: 2 })
@@ -78,7 +84,10 @@ test("inject curry func", t => {
 	}
 
 	const wrapper = mount(<App />)
-	t.is(wrapper.first().text(), "21")
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "21")
+		t.end()
+	}, 1000)
 })
 
 test.cb("inject an valid async factor should rerender component", t => {
@@ -123,7 +132,7 @@ test.cb("inject null or undefined should do nothing", t => {
 })
 
 test.cb("listen resource should listen lift", t => {
-	const api = new Promise((v, r) => setTimeout(() => v(1), 1000))
+	const api = new Promise((v, r) => setTimeout(() => v(1), 500))
 	type Props = {
 		a?: number
 		b: 2
@@ -164,7 +173,7 @@ test.cb("listen resource can listen other async resource", t => {
 	const wrapper = mount(<App />)
 	t.is(wrapper.first().text(), "21")
 	setTimeout(() => {
-		t.is(count, 4)
+		t.is(count, 3)
 		t.is(wrapper.first().text(), "224")
 		t.end()
 	}, 3000)
@@ -184,12 +193,17 @@ test.cb("test with router", t => {
 	}
 
 	type ChildProps = { productionId: string, production?: { id: number, name: string } }
-	@listen<ChildProps>((currentStore, nextStore) => currentStore.productionId !== nextStore.productionId ? fetch(nextStore.productionId) : null, "production")
+	@listen<ChildProps>((currentStore, nextStore) => {
+		// console.log("currentStore", currentStore)
+		// console.log("nextStore", nextStore)
+		return currentStore.productionId !== nextStore.productionId ? fetch(nextStore.productionId) : null
+	}, "production")
 	@lift({ production: {} })
 	class Child extends React.Component<ChildProps, any> {
 		public render() {
+			// console.log(this.props)
 			return <div>
-				{this.props.production ? this.props.production.name : null}
+				{this.props.production.name}
 			</div>
 		}
 	}
@@ -206,7 +220,7 @@ test.cb("test with router", t => {
 	t.is(wrapper.first().text(), "")
 	setTimeout(() => {
 		t.is(wrapper.first().text(), "xxx")
-	}, 100)
+	}, 500)
 	setTimeout(() => {
 		t.is(wrapper.first().text(), "yyy")
 		t.end()
