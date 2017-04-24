@@ -3,7 +3,7 @@ import { Component, StatelessComponent, ComponentClass, createElement } from "re
 import rootStore, { ImplStore } from "./"
 import { Observable, Subscription } from "rxjs"
 import { forkAsync, forkListen } from "./fork"
-import shallowEqual from "./utils/shallowEqual"
+import shallowPartialEqual from "./utils/shallowPartialEqual"
 
 export type Extral<S> = {
   setState: (nextState: Partial<S>, callback?: () => void) => void
@@ -29,36 +29,24 @@ export const lift =
 
         public constructor(props: P) {
           super(props)
+          // initialState 会覆盖props的值
+          this.state = Object.assign({}, props, initialState) as M
 
-          this.state = props as M
-
-          const currentStore = new ImplStore()
+          const currentStore = new ImplStore(this.state)
 
           rootStore.children[displayName] = currentStore
+          // 初始state相对listenResource$来说应该是空的，但是相对组件来说是initialState，因为lift是同步的
+          const state$ = Observable.of({})
 
-          const state$ = Observable.of(Object.assign({}, props, initialState))
+          const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source)).mergeAll()
 
-          const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync(source)).mergeAll()
+          const store$ = Observable.merge(currentStore.state$, asyncResource$)
 
-          const store$ =
-            currentStore.state$
-              .merge(state$, asyncResource$)
-              .scan((currentState, nextState) => Object.assign({}, currentState, nextState))
-              // buffer数据源，至少有2个state才继续往下走，那么它和share的区别是什么？
-              // publishReplay(2) = multicast(() => new ReplaySubject(2))
-              // 在refCount之后，所有的observer都是订阅的这个ReplaySubject，直到最后一个订阅被释放这个时候
-              // 这个hotObservable，也就是这段注释之前的数据源才会被释放掉。
-              // 而share不一样，share是在数据源是同步的时候会在subscriber close之后释放掉subscription，如果
-              // 第一次subscribe没被释放(eg. interval)，之后的subscribe发现subscription还在就会共用这个subscription(fromPromise好像有bug)
-              // ，这个时候share()才表现得和multicast().refCount()差不多。而这里的数据源是ReplaySubject(initialState)，
-              // 是个同步的任务，所以被释放掉了，之后watch的就再也订阅不了了。注意share !== publish().refCount()
-              .publishReplay(2)
-              .refCount()
-              .pairwise()
+          const listenStore$ = state$.merge(store$).scan((store, nextState) => ({ ...store, ...nextState })).pairwise()
 
-          const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen(source, store$)).mergeAll()
+          const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$)).mergeAll()
 
-          currentStore.store$ = store$.map(pairstore => pairstore[1]).merge(listenResource$)
+          currentStore.store$ = store$.skipUntil(currentStore.state$).merge(listenResource$)
 
         }
 
@@ -81,7 +69,7 @@ export const lift =
           const currentStore = rootStore.children[displayName]
           this.subscription =
             currentStore.store$
-              .filter(store => !shallowEqual(this.state, store))
+              .filter(nextState => !shallowPartialEqual(this.state, nextState))
               .subscribe((state: M & Extral<M>) => {
                 this.hasStoreStateChanged = true
                 const callback = state._callback || (() => { })

@@ -23,8 +23,7 @@ export class ImplStore<S> implements IStore<S> {
         this.store$ = this.state$.distinctUntilChanged(shallowPartialEqual).scan((acc, x) => ({ ...acc, ...x }))
     }
     public setState = (nextState: Partial<S>, callback?: () => void) => {
-        if (callback) this.state$.next(Object.assign({ _callback: callback }, nextState))
-        else this.state$.next(nextState)
+        this.state$.next(Object.assign({ _callback: callback }, nextState))
     }
     public subscribe = (success: (state: S & { _callback?: () => void }) => void, error?: (error: Error) => void, complete?: () => void) => {
         return this.store$.subscribe(store => {
