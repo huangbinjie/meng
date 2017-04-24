@@ -16,13 +16,13 @@ let App = class App extends React.Component {
         this.previousPage = () => {
             if (this.props.page === 1)
                 return;
-            this.props.setState({ page: this.props.page - 1 }, () => console.log("上一页"));
+            _1.default.children.App.setState({ page: this.props.page - 1 }, () => console.log("上一页"));
         };
         this.nextPage = () => {
             if (this.props.page === 5)
                 return;
             const page = this.props.page + 1;
-            this.props.setState({ page: page });
+            _1.default.children.App.setState({ page: page });
         };
     }
     render() {
@@ -35,7 +35,7 @@ let App = class App extends React.Component {
     }
 };
 App = __decorate([
-    _1.inject(api_1.fetchData, "lis"),
+    _1.listen(api_1.fetchData, "lis"),
     _1.lift({ lis: [], page: 1 })
 ], App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("root"));

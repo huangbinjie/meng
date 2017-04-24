@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function* dataGenerator() {
     let index = 0;
     while (true) {
@@ -10,7 +11,7 @@ function* dataGenerator() {
     }
 }
 const gen = dataGenerator();
-exports.fetchData = (currentStore, nextStore) => new Promise((resolve, reject) => {
+exports.fetchData = (lis) => new Promise((resolve, reject) => {
     console.log("this is a request");
-    resolve(nextStore.lis.concat(gen.next().value));
+    resolve(gen.next().value);
 });

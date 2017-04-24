@@ -2,12 +2,15 @@ import * as React from 'react'
 import { render } from 'react-dom'
 import Scroll from 'react-iscroller'
 
-import { lift, inject } from '../../../src/'
+import Store, { lift, inject, listen } from '../../../src/'
 import { fetchData } from './api'
 
-@inject(fetchData, (state: any) => {
-    return ({ lis: state })
-})
+type Props = {
+    lis: number[]
+    page: number
+}
+
+@listen<Props>((currentStore, nextStore) => fetchData, (currentState, state) => ([ ...currentState.lis, ...state ]))
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, any> {
     render() {
@@ -21,7 +24,7 @@ class App extends React.Component<any, any> {
     }
     private onend = () => {
         const page = this.props.page
-        this.props.setState({ page: page + 1 })
+        Store.children.App.setState({ page: page + 1 })
     }
 }
 

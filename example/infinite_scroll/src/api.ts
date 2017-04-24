@@ -11,7 +11,7 @@ function* dataGenerator() {
 
 const gen = dataGenerator()
 
-export const fetchData = (currentStore: any, nextStore: any): Promise<[number]> => new Promise((resolve, reject) => {
+export const fetchData = (lis: any[]) => new Promise((resolve, reject) => {
   console.log("this is a request")
-  resolve(nextStore.lis.concat(gen.next().value))
+  resolve(gen.next().value)
 })
