@@ -17232,10 +17232,9 @@ function* dataGenerator() {
     }
 }
 const gen = dataGenerator();
-exports.fetchData = (currentStore, nextStore) => new Promise((resolve, reject) => {
+exports.fetchData = () => new Promise((resolve, reject) => {
     console.log("this is a request");
-    console.log(nextStore);
-    resolve(nextStore.lis.concat(gen.next().value));
+    resolve(gen.next().value);
 });
 
 
@@ -29486,16 +29485,13 @@ let App = class App extends React.Component {
         };
     }
     render() {
-        console.log(this.props);
         const lis = this.props.lis.map((n, i) => React.createElement("li", { key: i, style: { height: "20px", lineHeight: "20px" } }, n));
         return (React.createElement("div", null,
             React.createElement(react_iscroller_1.default, { onEnd: this.onend }, lis)));
     }
 };
 App = __decorate([
-    _1.listen(api_1.fetchData, (state) => {
-        return ({ lis: state });
-    }),
+    _1.listen((currentStore, nextStore) => api_1.fetchData, (currentState, state) => ({ lis: [...currentState.lis, ...state] })),
     _1.lift({ lis: [], page: 1 })
 ], App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("root"));
@@ -45427,25 +45423,25 @@ function forkAsync({ source$, success }) {
     if (source$ == void 0)
         return rxjs_1.Observable.never();
     else if (source$ instanceof rxjs_1.Observable)
-        return source$.map(exports.implSelector(success));
+        return source$.map(state => implSelector.call(this, state, success));
     else if (source$ instanceof Promise)
-        return rxjs_1.Observable.fromPromise(source$).map(exports.implSelector(success));
+        return rxjs_1.Observable.fromPromise(source$).map(state => implSelector.call(this, state, success));
     else if (source$ instanceof _1.ImplStore)
-        return source$.store$.map(exports.implSelector(success));
+        return source$.store$.map(state => implSelector.call(this, state, success));
     else if (source$ instanceof Function && source$.length === 0)
-        return forkAsync({ source$: source$(), success });
+        return forkAsync.call(this, { source$: source$(), success });
     else
-        return rxjs_1.Observable.of(source$).map(exports.implSelector(success));
+        return rxjs_1.Observable.of(source$).map(state => implSelector.call(this, state, success));
 }
 exports.forkAsync = forkAsync;
 function forkListen({ source$, success }, store$) {
-    return store$.flatMap(pairstore => forkAsync({ source$: source$(pairstore[0], pairstore[1]), success }));
+    return store$.flatMap(pairstore => forkAsync.call(this, { source$: source$(pairstore[0], pairstore[1]), success }));
 }
 exports.forkListen = forkListen;
-exports.combineLatestSelector = (acc, x) => Object.assign(acc, x);
-exports.resetCallback = (state) => Object.assign(state, { callback: () => { } });
-exports.implSelector = (success) => (state) => typeof success === "string" ? ({ [success]: state }) : success(state);
-exports.nullCheck = (state) => state != void 0;
+function implSelector(state, success) {
+    return typeof success === "string" ? ({ [success]: state }) : success(this.state, state);
+}
+exports.implSelector = implSelector;
 
 
 /***/ }),
@@ -45486,10 +45482,10 @@ exports.lift = (initialState = {}, initialName) => (component) => {
                 const currentStore = new _1.ImplStore(this.state);
                 _1.default.children[displayName] = currentStore;
                 const state$ = rxjs_1.Observable.of({});
-                const asyncResource$ = rxjs_1.Observable.from(LiftedComponent.asyncResource).map(source => fork_1.forkAsync(source)).mergeAll();
+                const asyncResource$ = rxjs_1.Observable.from(LiftedComponent.asyncResource).map(source => fork_1.forkAsync.call(this, source)).mergeAll();
                 const store$ = rxjs_1.Observable.merge(currentStore.state$, asyncResource$);
                 const listenStore$ = state$.merge(store$).scan((store, nextState) => (Object.assign({}, store, nextState))).pairwise();
-                const listenResource$ = rxjs_1.Observable.from(LiftedComponent.listenResource).map(source => fork_1.forkListen(source, listenStore$)).mergeAll();
+                const listenResource$ = rxjs_1.Observable.from(LiftedComponent.listenResource).map(source => fork_1.forkListen.call(this, source, listenStore$)).mergeAll();
                 currentStore.store$ = store$.skipUntil(currentStore.state$).merge(listenResource$);
             }
             componentWillUnmount() {

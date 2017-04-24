@@ -10,11 +10,11 @@ type Props = {
     page: number
 }
 
-@listen<Props>((currentStore, nextStore) => fetchData, (currentState, state) => ([ ...currentState.lis, ...state ]))
+@listen<Props>((currentStore, nextStore) => fetchData, (currentState, state: Props["lis"]) => ({ lis: [...currentState.lis, ...state] }))
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, any> {
     render() {
-        console.log(this.props)
+        // console.log(this.props)
         const lis = this.props.lis.map((n: string, i: number) => <li key={i} style={{ height: "20px", lineHeight: "20px" }}>{n}</li>)
         return (
             <div>

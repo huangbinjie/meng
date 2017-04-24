@@ -11,7 +11,7 @@ function* dataGenerator() {
 
 const gen = dataGenerator()
 
-export const fetchData = (lis: any[]) => new Promise((resolve, reject) => {
+export const fetchData = () => new Promise((resolve, reject) => {
   console.log("this is a request")
   resolve(gen.next().value)
 })

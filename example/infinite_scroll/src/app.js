@@ -20,14 +20,13 @@ let App = class App extends React.Component {
         };
     }
     render() {
-        console.log(this.props);
         const lis = this.props.lis.map((n, i) => React.createElement("li", { key: i, style: { height: "20px", lineHeight: "20px" } }, n));
         return (React.createElement("div", null,
             React.createElement(react_iscroller_1.default, { onEnd: this.onend }, lis)));
     }
 };
 App = __decorate([
-    _1.listen((currentStore, nextStore) => api_1.fetchData, (currentState, state) => ([...currentState.lis, ...state])),
+    _1.listen((currentStore, nextStore) => api_1.fetchData, (currentState, state) => ({ lis: [...currentState.lis, ...state] })),
     _1.lift({ lis: [], page: 1 })
 ], App);
 react_dom_1.render(React.createElement(App, null), document.getElementById("root"));

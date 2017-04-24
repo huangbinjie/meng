@@ -11,7 +11,7 @@ function* dataGenerator() {
     }
 }
 const gen = dataGenerator();
-exports.fetchData = (lis) => new Promise((resolve, reject) => {
+exports.fetchData = () => new Promise((resolve, reject) => {
     console.log("this is a request");
     resolve(gen.next().value);
 });
