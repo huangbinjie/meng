@@ -8,14 +8,15 @@ function shallowEqual(objA, objB) {
         return false;
     }
     var keysA = Object.keys(objA);
-    var keysB = Object.keys(objB);
+    var keysB = Object.keys(objB).filter(function (key) { return key !== "_callback"; });
     if (keysA.length !== keysB.length) {
         return false;
     }
     var hasOwn = Object.prototype.hasOwnProperty;
-    for (var i = 0; i < keysA.length; i++) {
-        if (!hasOwn.call(objB, keysA[i]) ||
-            objA[keysA[i]] !== objB[keysA[i]]) {
+    for (var _i = 0, keysA_1 = keysA; _i < keysA_1.length; _i++) {
+        var keyA = keysA_1[_i];
+        if (!hasOwn.call(objB, keyA) ||
+            objA[keyA] !== objB[keyA]) {
             return false;
         }
     }

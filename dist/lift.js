@@ -9,55 +9,57 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = require("react");
 var _1 = require("./");
 var rxjs_1 = require("rxjs");
 var fork_1 = require("./fork");
-var shallowEqual_1 = require("./utils/shallowEqual");
+var shallowPartialEqual_1 = require("./utils/shallowPartialEqual");
 exports.lift = function (initialState, initialName) {
     if (initialState === void 0) { initialState = {}; }
     return function (component) {
-        var _displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
+        var displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2);
         return _a = (function (_super) {
                 __extends(LiftedComponent, _super);
                 function LiftedComponent(props) {
                     var _this = _super.call(this, props) || this;
-                    var mergedState = Object.assign({}, initialState, props);
-                    var currentStore = new _1.ImplStore(mergedState);
-                    _this.state = Object.assign({ setState: currentStore.setState }, mergedState);
-                    _1.default.children[_displayName] = currentStore;
-                    var resource$ = rxjs_1.Observable.from(LiftedComponent.resource);
-                    var parts = resource$.partition(function (resource) { return resource.source$ instanceof Function && resource.source$.length > 0; });
-                    var asyncResource$ = parts[1].map(function (source) { return fork_1.fork(source); }).mergeAll();
-                    var store$ = currentStore.state$
-                        .merge(asyncResource$)
-                        .scan(function (currentStore, nextState) { return Object.assign({}, currentStore, nextState); })
-                        .publishReplay(2)
-                        .refCount()
-                        .pairwise();
-                    var listenResource$ = parts[0].map(function (source) { return fork_1.fork.call(_this, source, store$); }).mergeAll();
-                    currentStore.store$ = store$.map(function (pairstore) { return pairstore[1]; }).merge(listenResource$);
+                    _this.state = Object.assign({}, props, initialState);
+                    var currentStore = new _1.ImplStore(_this.state);
+                    _1.default.children[displayName] = currentStore;
+                    var state$ = rxjs_1.Observable.of({});
+                    var asyncResource$ = rxjs_1.Observable.from(LiftedComponent.asyncResource).map(function (source) { return fork_1.forkAsync.call(_this, source); }).mergeAll();
+                    var store$ = rxjs_1.Observable.merge(currentStore.state$, asyncResource$);
+                    var listenStore$ = state$.merge(store$).scan(function (store, nextState) { return (__assign({}, store, nextState)); }).pairwise();
+                    var listenResource$ = rxjs_1.Observable.from(LiftedComponent.listenResource).map(function (source) { return fork_1.forkListen.call(_this, source, listenStore$); }).mergeAll();
+                    currentStore.store$ = store$.skipUntil(currentStore.state$).merge(listenResource$);
                     return _this;
                 }
                 LiftedComponent.prototype.componentWillUnmount = function () {
-                    delete _1.default.children[_displayName];
+                    delete _1.default.children[displayName];
                     this.hasStoreStateChanged = false;
                     this.subscription.unsubscribe();
                 };
                 LiftedComponent.prototype.componentWillReceiveProps = function (nextProps) {
-                    _1.default.children[_displayName].setState(nextProps);
+                    _1.default.children[displayName].setState(nextProps);
                 };
                 LiftedComponent.prototype.componentDidMount = function () {
                     var _this = this;
-                    var currentStore = _1.default.children[_displayName];
+                    var currentStore = _1.default.children[displayName];
                     this.subscription =
                         currentStore.store$
-                            .filter(function (store) { return !shallowEqual_1.default(_this.state, store); })
+                            .filter(function (nextState) { return !shallowPartialEqual_1.default(_this.state, nextState); })
                             .subscribe(function (state) {
                             _this.hasStoreStateChanged = true;
-                            var callback = state.callback || (function () { });
-                            delete state.callback;
+                            var callback = state._callback || (function () { });
+                            delete state._callback;
                             _this.setState(state, callback);
                         });
                 };
@@ -70,8 +72,9 @@ exports.lift = function (initialState, initialName) {
                 };
                 return LiftedComponent;
             }(react_1.Component)),
-            _a.displayName = "Meng(" + _displayName + ")",
-            _a.resource = [],
+            _a.displayName = "Meng(" + displayName + ")",
+            _a.asyncResource = [],
+            _a.listenResource = [],
             _a;
         var _a;
     };

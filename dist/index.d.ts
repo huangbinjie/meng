@@ -1,24 +1,28 @@
-import { ReplaySubject, Observable, Subscription } from 'rxjs';
-export interface Store<S> {
+import { ReplaySubject, Observable, Subscription } from "rxjs";
+export interface IStore<S> {
     state$: ReplaySubject<S>;
     store$: Observable<S>;
     children: {
-        [key: string]: Store<Object>;
+        [key: string]: IStore<S>;
     };
-    setState: (nextState: S, callback?: () => void) => void;
-    subscribe: (success: (state: Object) => void, error?: (error: Error) => void, complete?: () => void) => Subscription;
+    setState: (nextState: Partial<S>, callback?: () => void) => void;
+    subscribe: (success: (state: S) => void, error?: (error: Error) => void, complete?: () => void) => Subscription;
 }
-export declare class ImplStore<S> implements Store<S> {
-    constructor(initialState?: S);
-    store$: Observable<S>;
+export declare class ImplStore<S> implements IStore<S> {
+    store$: Observable<S & {
+        _callback?: () => void;
+    }>;
     state$: ReplaySubject<{}>;
     children: {
-        [key: string]: Store<Object>;
+        [key: string]: IStore<S>;
     };
-    setState: (nextState: Object, callback?: () => void) => void;
-    subscribe: (success: (state: Object) => void, error?: ((error: Error) => void) | undefined, complete?: (() => void) | undefined) => Subscription;
+    constructor(initialState?: S);
+    setState: (nextState: Partial<S>, callback?: (() => void) | undefined) => void;
+    subscribe: (success: (state: S & {
+        _callback?: (() => void) | undefined;
+    }) => void, error?: ((error: Error) => void) | undefined, complete?: (() => void) | undefined) => Subscription;
 }
 declare const rootStore: ImplStore<{}>;
-export { lift } from './lift';
-export { inject } from './inject';
+export { lift } from "./lift";
+export { inject, listen } from "./inject";
 export default rootStore;

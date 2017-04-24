@@ -17,11 +17,15 @@ var ImplStore = (function () {
         this.state$ = new rxjs_1.ReplaySubject(1);
         this.children = {};
         this.setState = function (nextState, callback) {
-            if (callback === void 0) { callback = function () { }; }
-            return _this.state$.next(__assign({}, nextState, { callback: callback }));
+            _this.state$.next(Object.assign({ _callback: callback }, nextState));
         };
         this.subscribe = function (success, error, complete) {
-            return _this.store$.subscribe(success, error, complete);
+            return _this.store$.subscribe(function (store) {
+                var callback = store._callback || (function () { });
+                delete store._callback;
+                success(store);
+                callback();
+            }, error, complete);
         };
         this.state$.next(initialState);
         this.store$ = this.state$.distinctUntilChanged(shallowPartialEqual_1.default).scan(function (acc, x) { return (__assign({}, acc, x)); });
@@ -34,5 +38,6 @@ var lift_1 = require("./lift");
 exports.lift = lift_1.lift;
 var inject_1 = require("./inject");
 exports.inject = inject_1.inject;
+exports.listen = inject_1.listen;
 exports.default = rootStore;
 //# sourceMappingURL=index.js.map
