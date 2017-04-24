@@ -1,7 +1,7 @@
 import { ObservableInput } from "rxjs/Observable"
 import { ComponentClass } from "react"
 
-export type Inject = ObservableInput<Object> | (() => any) | Object
+export type Inject = ObservableInput<Object> | (() => any) | any
 
 export type Listen<S> = (currentStore: Partial<S>, nextStore: Partial<S>) => Inject
 
