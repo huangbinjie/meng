@@ -42,7 +42,7 @@ test.cb("inject observable", t => {
 test.cb("inject store", t => {
 	Store.setState({ userinfo: { name: "corol" } })
 
-	@inject(Store, (store: any) => ({ name: store.userinfo.name }))
+	@inject(Store, (currentState, store: any) => ({ name: store.userinfo.name }))
 	@lift({ a: 2 })
 	class App extends React.Component<any, any>{
 		public render() {

@@ -7,7 +7,7 @@ export type Listen<S> = (currentStore: Partial<S>, nextStore: Partial<S>) => Inj
 
 export type Success<S> = string | ((currentState: S, state: Partial<S>) => object)
 
-export type AsyncResource = { source$: Inject, success: Success }
+export type AsyncResource<S> = { source$: Inject, success: Success<S> }
 
 export type ListenResource<S> = { source$: Listen<S>, success: Success<S> }
 
