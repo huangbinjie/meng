@@ -22,8 +22,8 @@ export const lift =
       const displayName = initialName || component.displayName || component.name || Math.random().toString(32).substr(2)
       return class LiftedComponent extends Component<P, M> {
         private static displayName = `Meng(${displayName})`
-        private static asyncResource: Array<AsyncResource<M>> = []
-        private static listenResource: Array<ListenResource<M>> = []
+        private static asyncResource: Array<AsyncResource<S>> = []
+        private static listenResource: Array<ListenResource<S>> = []
         private hasStoreStateChanged: Boolean
         private subscription: Subscription
 

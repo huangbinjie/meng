@@ -135,9 +135,9 @@ test.cb("listen resource should listen lift", t => {
 	const api = new Promise((v, r) => setTimeout(() => v(1), 500))
 	type Props = {
 		a?: number
-		b: 2
+		b: number
 	}
-	@listen<Props>((currentStore, nextStore) => nextStore.a === 2 ? api : null, "b")
+	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (currentState, state) => ({ b: state }))
 	@lift({ a: 2 })
 	class App extends React.Component<Props, void>{
 		public render() {
@@ -161,7 +161,7 @@ test.cb("listen resource can listen other async resource", t => {
 		b?: number
 		c?: number
 	}
-	@listen<Props>((currentStore, nextStore) => nextStore.b === 2 ? api4 : null, "c")
+	@listen((currentStore: Props, nextStore: Props) => nextStore.b === 2 ? api4 : null, "c")
 	@inject(api2, "b")
 	@lift({ a: 2, b: 1 })
 	class App extends React.Component<Props, void>{
@@ -193,7 +193,7 @@ test.cb("test with router", t => {
 	}
 
 	type ChildProps = { productionId: string, production?: { id: number, name: string } }
-	@listen<ChildProps>((currentStore, nextStore) => {
+	@listen((currentStore: ChildProps, nextStore: ChildProps) => {
 		// console.log("currentStore", currentStore)
 		// console.log("nextStore", nextStore)
 		return currentStore.productionId !== nextStore.productionId ? fetch(nextStore.productionId) : null
