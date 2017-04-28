@@ -1,7 +1,7 @@
 {
   "name": "meng",
-  "version": "3.3.1",
-  "description": "react unidirectional lib",
+  "version": "3.3.2",
+  "description": "an high order component for lift state and inject data source",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
