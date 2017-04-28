@@ -32,7 +32,7 @@ export function forkAsync<S extends object, C extends Component<Partial<S>, S>>(
 }
 
 /** 打开监听数据源 listen */
-export function forkListen<S extends object, C extends Component<Partial<S>, S>, K extends keyof S, P extends K>(this: C, { source$, success }: ListenResource<S>, store$: Observable<[Partial<S>, Partial<S>]>): Observable<S> {
+export function forkListen<S extends object, C extends Component<Partial<S>, S>>(this: C, { source$, success }: ListenResource<S>, store$: Observable<[Partial<S>, Partial<S>]>): Observable<S> {
     return store$.flatMap(pairstore => forkAsync.call(this, { source$: source$(pairstore[0], pairstore[1]), success }))
 }
 
