@@ -136,8 +136,9 @@ test.cb("listen resource should listen lift", t => {
 	type Props = {
 		a?: number
 		b: number
+		c?: string
 	}
-	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (currentState, state) => ({ b: state }))
+	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (currentState, state: number) => ({ b: state }))
 	@lift({ a: 2 })
 	class App extends React.Component<Props, void>{
 		public render() {

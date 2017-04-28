@@ -36,6 +36,6 @@ export function forkListen<S extends object, C extends Component<Partial<S>, S>>
     return store$.flatMap(pairstore => forkAsync.call(this, { source$: source$(pairstore[0], pairstore[1]), success }))
 }
 
-export function implSelector<S, C extends Component<Partial<S>, S>, K extends keyof S>(this: C, state: S[K], success: Success<S, K>) {
+export function implSelector<S, C extends Component<Partial<S>, S>, K extends keyof S>(this: C, state: S[K], success: Success<S>) {
     return typeof success === "string" ? ({ [success]: state }) : success(this.state, state)
 }
