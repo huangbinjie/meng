@@ -20,6 +20,19 @@ test("should kep last initial state", t => {
 	})
 })
 
+test("setState should receive observable, promise and primitive value", t => {
+	const Store = new ImplStore<{ a: number }>()
+	const api = new Promise((v, r) => v(2))
+	const api$ = Observable.of(3)
+	Store.setState({ a: 1 })
+	Store.setState(api.then(value => ({ a: value })))
+	Store.setState(api$.map(value => ({ a: value })))
+	Store.subscribe(state => {
+		t.pass()
+		t.deepEqual(state, { a: 3 })
+	})
+})
+
 test("subscribed store should merge new state", t => {
 	type TStore = {
 		a: number
@@ -70,6 +83,6 @@ test("shallow equal should exclude _callback", t => {
 	})
 
 	Store.subscribe(() => { t.pass() })
-	Store.setState({ a: 2 }, t.pass)
+	Store.setState({ a: 2 }, () => t.pass())
 	Store.setState({ a: 2 })
 })
