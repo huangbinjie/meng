@@ -1,6 +1,6 @@
 # mengbi
 
-an arbitrary magic react state management.
+an arbitrary magic react state management for rxjs enthusiast.
 
 ## 安装
 
@@ -176,4 +176,4 @@ mengbi.jsÏ
 
 ## 其他
 
-不需要初始化，不需要配置，不需要`import redux-xxx * N`，赶快试试吧。如果有好的建议，请发我邮箱: `akira.binjie@gmail.com`或者加我扣扣`501711499`
+发现一款和我思路很像的库，强烈建议看看[freactal](https://github.com/FormidableLabs/freactal)
