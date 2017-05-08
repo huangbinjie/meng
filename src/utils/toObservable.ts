@@ -1,4 +1,5 @@
 import { Observable } from "rxjs"
+import { ImplStore } from "../"
 
 export default function toObservable(source: any) {
 	if (source == void 0)
@@ -10,6 +11,8 @@ export default function toObservable(source: any) {
 	else if (source instanceof Promise)
 		return Observable.fromPromise(source)
 
+	else if (source instanceof ImplStore)
+		return source.store$
 	else
 		return Observable.of(source)
 }
