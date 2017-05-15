@@ -40,7 +40,7 @@ export const lift =
 
           const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source)).mergeAll()
 
-          const store$ = Observable.merge(currentStore.state$.mergeAll<Observable<{}>>(), asyncResource$)
+          const store$ = Observable.merge(currentStore.state$.mergeAll<Observable<{}>>(), asyncResource$).publishReplay(1).refCount()
 
           const listenStore$ = state$.merge(store$).scan((store, nextState) => ({ ...store, ...nextState })).pairwise()
 
