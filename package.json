@@ -1,14 +1,16 @@
 {
   "name": "meng",
-  "version": "3.3.5",
+  "version": "3.3.7",
   "description": "an high order component for lift state and inject data source",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
+    "build": "rm -fr dist && tsc",
     "build_test": "rm -fr _test && tsc -p test/",
     "clean_test": "rm -fr _test",
     "test_ava": "ava _test/test/",
-    "test": "npm-run-all build_test test_ava clean_test"
+    "test": "npm-run-all build_test test_ava clean_test",
+    "prepublish": "npm run build"
   },
   "repository": {
     "type": "git",
