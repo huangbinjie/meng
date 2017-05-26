@@ -38,7 +38,7 @@ export const lift =
           // 初始state相对listenResource$来说应该是空的，但是相对组件来说是initialState，因为lift是同步的
           const state$ = Observable.of({})
 
-          const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source)).mergeAll()
+          const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source)).filter(state => state !== null).mergeAll()
 
           const store$ = Observable.merge(currentStore.state$.mergeAll<Observable<{}>>(), asyncResource$).publishReplay(1).refCount()
 
@@ -69,7 +69,7 @@ export const lift =
           const currentStore = rootStore.children[displayName]
           this.subscription =
             currentStore.store$
-              .filter(nextState => !shallowPartialEqual(this.state, nextState))
+              .filter(nextState => !shallowPartialEqual(this.state as {}, nextState))
               .subscribe((state: M & Extral<M>) => {
                 this.hasStoreStateChanged = true
                 const callback = state._callback || (() => { })

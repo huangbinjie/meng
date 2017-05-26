@@ -162,7 +162,10 @@ test.cb("listen resource can listen other async resource", t => {
 		b?: number
 		c?: number
 	}
-	@listen((currentStore: Props, nextStore: Props) => nextStore.b === 2 ? api4 : null, "c")
+	@listen((currentStore: Props, nextStore: Props) => {
+		// console.log(currentStore, nextStore)
+		return nextStore.b === 2 ? api4 : null
+	}, "c")
 	@inject(api2, "b")
 	@lift({ a: 2, b: 1 })
 	class App extends React.Component<Props, void>{
@@ -184,10 +187,11 @@ test.cb("test with router", t => {
 	class Parent extends React.Component<any, any> {
 		public state = { path: "/product/1" }
 		public componentDidMount() {
-			// let me simulate a route changed action
+			// simulate a route changed action
 			setTimeout(() => this.setState({ path: "/product/2" }), 1000)
 		}
 		public render() {
+			console.log("state", this.state)
 			const productId = this.state.path.match(/\/.+\/(\d)/)[1]
 			return <Child productionId={productId} />
 		}
