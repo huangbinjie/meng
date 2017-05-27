@@ -43,7 +43,7 @@ interface Store<S> {
 ```js
 import Store from 'meng'
 
-Store.children.App.setState({user: {}})
+Store.children.App.setState({user: {name: "corol"}}, error => {})
 ```
 
 ### lift: (initialState, initialName) => React.Component
@@ -53,12 +53,12 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 + `initialState` 初始化meng组件的状态
 + `initialName` 设置store的名字，如果不显式的设置，则默认使用displayName、函数名称、随机一个名字，按优先级排序。
 
-### inject: (Resource, selector) => React.Component
+### inject: (Resource, string | (currentState, nextState) => object) => React.Component
 
 + `Resource` 给组件注入数据源，可以是promise，也可以是其他组件的store，也可以是函数
 + `selector` 注入到react组件的props的变量的名称，可以是stirng也可以是返回一个对象(会覆盖store里的其他状态)
 
-### listen: ((currentStore, nextStore) => Resource, selector) => React.Component
+### listen: ((currentStore, nextStore) => any, string | (currentState, nextState) => objectÏÏ) => React.Component
 
 可以监听lift里面的状态和其他injected数据源，但是没办法监听listen数据源.
 
@@ -67,18 +67,20 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 展示一段我用meng写的博客里的代码吧:
 
 ```js
-const injectedList = (currentStore: Props, nextStore: Props) => {
-  return currentStore.latest !== nextStore.latest
-    ? list("C0PKC07FB", nextStore.latest)
-      .do(newPost => newPost.messages = nextStore.post.messages.concat(newPost.messages))
-    : null
+const listenList = (currentStore: Props, nextStore: Props) => {
+  return currentStore.latest !== nextStore.latest ? list("C0PKC07FB", nextStore.latest) : null
+}
+
+const listSelector = (currentState: Props, state: ISlackListType) => {
+  const previousMessages = (currentState.post && currentState.post.messages) || []
+  state.messages = previousMessages.concat(state.messages)
+  return { post: state }
 }
 
 @inject(connect, "newmsg")
-@listen(injectedList, "post")
+@listen(listenList, listSelector)
 @inject(user, "user")
-@inject(() => list("C0PKC07FB", "0"), "post")
-@lift({ latest: "0", newmsg: [] as ISlackMessage[] }, "Slack")
+@lift({ latest: "0", newmsg: [] as Array<ISlackUserMessage & ISlackBotMessage> }, "Slack")
 export default class Slack extends React.Component<Props, void> {
   public render() {
     return (

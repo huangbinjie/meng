@@ -23,10 +23,17 @@ export class ImplStore<S extends object> implements IStore<S> {
         this.state$.next(toObservable(initialState) || {})
         this.store$ = this.state$.mergeAll<Observable<S>>().distinctUntilChanged(shallowPartialEqual).scan((acc: S, x: Partial<S>) => Object.assign(acc, x))
     }
-    public setState = (nextState: Partial<S>, callback?: (error?: Error) => void) => {
+    public setState = (nextState: Partial<S>, callback = (error?: Error) => { }) => {
         const state$ = toObservable(nextState)
         // .map(state => Object.assign(state, ...))会导致componentWillReceiveProps的setstate不工作
-        const nextState$ = state$ ? state$.map(state => Object.assign({}, state, { _callback: callback })) : {}
+        const nextState$ = state$ ?
+            state$
+                .map(state => Object.assign({}, state, { _callback: callback }))
+                .catch(error => {
+                    callback(error)
+                    return Observable.never()
+                }) :
+            {}
         this.state$.next(nextState$)
     }
     public subscribe = (success: (state: S & { _callback?: () => void }) => void, error?: (error: Error) => void, complete?: () => void) => {

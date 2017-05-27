@@ -13,6 +13,7 @@ test("should kep last initial state", t => {
 	const Store = new ImplStore<{ a: number }>({ a: 0 })
 	Store.setState({ a: 1 })
 	Store.setState({ a: 2 })
+	Store.setState({})
 	Store.setState({ a: 3 })
 	Store.subscribe(state => {
 		t.pass()
@@ -73,6 +74,24 @@ test("setState callback should work", t => {
 	Store.subscribe((state) => {
 		if (state._callback) state._callback()
 	})
+})
+
+test.cb("set a rejected promise should not call callback with error message", t => {
+	t.plan(3)
+	const store = new ImplStore({ a: 1 })
+	const api = new Promise((v, r) => {
+		JSON.parse("")
+		v(1)
+	})
+
+	store.subscribe((data) => t.pass(), err => t.pass())
+
+	store.setState(api, error => {
+		t.truthy(error)
+		t.true(error instanceof Error)
+	})
+
+	setTimeout(t.end, 2000)
 })
 
 test("shallow equal should exclude _callback", t => {
