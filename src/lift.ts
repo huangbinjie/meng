@@ -24,7 +24,7 @@ export const lift =
         private static displayName = `Meng(${displayName})`
         private static asyncResource: Array<AsyncResource<S>> = []
         private static listenResource: Array<ListenResource<S>> = []
-        private hasStoreStateChanged: Boolean
+        private hasStoreStateChanged: boolean
         private subscription: Subscription
 
         public constructor(props: P) {
@@ -38,13 +38,13 @@ export const lift =
           // 初始state相对listenResource$来说应该是空的，但是相对组件来说是initialState，因为lift是同步的
           const state$ = Observable.of({})
 
-          const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source)).filter(state => state !== null).mergeAll()
+          const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source) as Observable<M>).filter(state => state !== null).mergeAll()
 
-          const store$ = Observable.merge(currentStore.state$.mergeAll<Observable<{}>>(), asyncResource$).publishReplay(1).refCount()
+          const store$ = Observable.merge(currentStore.state$.mergeAll(), asyncResource$).publishReplay(1).refCount() as Observable<M>
 
-          const listenStore$ = state$.merge(store$).scan((store, nextState) => ({ ...store, ...nextState })).pairwise()
+          const listenStore$ = state$.merge(store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
 
-          const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$)).mergeAll()
+          const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>).mergeAll()
 
           currentStore.store$ = store$.skipUntil(currentStore.state$).merge(listenResource$)
 

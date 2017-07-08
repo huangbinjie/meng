@@ -1,40 +1,42 @@
-import { ReplaySubject, Observable, Subscription } from "rxjs"
+import { Observable, ReplaySubject, Subscription } from "rxjs"
+import { ObservableInput, Subscribable } from "rxjs/Observable"
 import { StatelessComponent, ComponentLifecycle } from "react"
 import shallowPartialEqual from "./utils/shallowPartialEqual"
 import toObservable from "./utils/toObservable"
 
 export interface IStore<S> {
-    state$: ReplaySubject<S>
+    state$: ReplaySubject<Observable<Partial<S>>>
     store$: Observable<S>
     children: { [key: string]: IStore<S> }
-    setState: (nextState: Partial<S>, callback?: () => void) => void,
+    setState: (nextState: Partial<S> | ObservableInput<Partial<S>>, callback?: () => void) => void,
     subscribe: (success: (state: S) => void, error?: (error: Error) => void, complete?: () => void) => Subscription
 }
 
 /**
  * ImplStore
- * all store should instanceof this class
+ * all store is this class's instantiation
  */
-export class ImplStore<S extends object> implements IStore<S> {
+export class ImplStore<S> implements IStore<S> {
     public store$: Observable<S & { _callback?: () => void }>
-    public state$ = new ReplaySubject(1)
+    public state$ = new ReplaySubject<Observable<Partial<S>>>(1)
     public children: { [key: string]: IStore<S> } = {}
     constructor(initialState = {} as S) {
-        this.state$.next(toObservable(initialState) || {})
-        this.store$ = this.state$.mergeAll<Observable<S>>().distinctUntilChanged(shallowPartialEqual).scan((acc: S, x: Partial<S>) => Object.assign(acc, x))
+        const observableState = toObservable(initialState)
+        if (observableState) this.state$.next(observableState)
+        this.store$ = this.state$.mergeAll().distinctUntilChanged(shallowPartialEqual).scan((acc: S, x: Partial<S>) => Object.assign(acc, x)) as Observable<S>
     }
-    public setState = (nextState: Partial<S>, callback = (error?: Error) => { }) => {
-        const state$ = toObservable(nextState)
+    public setState = (nextState: Partial<S> | ObservableInput<Partial<S>>, callback = (error?: Error) => { }) => {
+        const state$ = toObservable<S>(nextState)
         // .map(state => Object.assign(state, ...))会导致componentWillReceiveProps的setstate不工作
-        const nextState$ = state$ ?
-            state$
+        if (state$) {
+            const nextState$ = state$
                 .map(state => Object.assign({}, state, { _callback: callback }))
                 .catch(error => {
                     callback(error)
                     return Observable.never()
-                }) :
-            {}
-        this.state$.next(nextState$)
+                })
+            this.state$.next(nextState$)
+        }
     }
     public subscribe = (success: (state: S & { _callback?: () => void }) => void, error?: (error: Error) => void, complete?: () => void) => {
         return this.store$.subscribe(store => {

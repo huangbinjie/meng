@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { ImplStore } from "../"
 
-export default function toObservable<T>(source: T): Observable<T> | null {
+export default function toObservable<T>(source: any): Observable<T> | null {
 	if (source == void 0)
 		return null
 
@@ -13,6 +13,7 @@ export default function toObservable<T>(source: T): Observable<T> | null {
 
 	else if (source instanceof ImplStore)
 		return source.store$
+
 	else
 		return Observable.of(source)
 }

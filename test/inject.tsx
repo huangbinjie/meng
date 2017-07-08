@@ -140,7 +140,7 @@ test.cb("listen resource should listen lift", t => {
 	}
 	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (currentState, state: number) => ({ b: state }))
 	@lift({ a: 2 })
-	class App extends React.Component<Props, void>{
+	class App extends React.Component<Props, null>{
 		public render() {
 			return <div>{this.props.a}{this.props.b}</div>
 		}
@@ -168,7 +168,7 @@ test.cb("listen resource can listen other async resource", t => {
 	}, "c")
 	@inject(api2, "b")
 	@lift({ a: 2, b: 1 })
-	class App extends React.Component<Props, void>{
+	class App extends React.Component<Props, null>{
 		public render() {
 			++count
 			return <div>{this.props.a}{this.props.b}{this.props.c}</div>
@@ -191,7 +191,7 @@ test.cb("test with router", t => {
 			setTimeout(() => this.setState({ path: "/product/2" }), 1000)
 		}
 		public render() {
-			console.log("state", this.state)
+			// console.log("state", this.state)
 			const productId = this.state.path.match(/\/.+\/(\d)/)[1]
 			return <Child productionId={productId} />
 		}
@@ -199,8 +199,8 @@ test.cb("test with router", t => {
 
 	type ChildProps = { productionId: string, production?: { id: number, name: string } }
 	@listen((currentStore: ChildProps, nextStore: ChildProps) => {
-		// console.log("currentStore", currentStore)
-		// console.log("nextStore", nextStore)
+		console.log("currentStore", currentStore)
+		console.log("nextStore", nextStore)
 		return currentStore.productionId !== nextStore.productionId ? fetch(nextStore.productionId) : null
 	}, "production")
 	@lift({ production: {} })
@@ -225,7 +225,7 @@ test.cb("test with router", t => {
 	t.is(wrapper.first().text(), "")
 	setTimeout(() => {
 		t.is(wrapper.first().text(), "xxx")
-	}, 500)
+	}, 1000)
 	setTimeout(() => {
 		t.is(wrapper.first().text(), "yyy")
 		t.end()

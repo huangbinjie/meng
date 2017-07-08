@@ -8,9 +8,9 @@ test("should have an empty object", t => {
 	Store.subscribe(state => t.deepEqual(state, {}))
 })
 
-test("should kep last initial state", t => {
+test("should keep last initial state", t => {
 	t.plan(2)
-	const Store = new ImplStore<{ a: number }>({ a: 0 })
+	const Store = new ImplStore({ a: 0 })
 	Store.setState({ a: 1 })
 	Store.setState({ a: 2 })
 	Store.setState({})
@@ -23,7 +23,7 @@ test("should kep last initial state", t => {
 
 test("setState should receive observable, promise and primitive value", t => {
 	const Store = new ImplStore<{ a: number }>()
-	const api = new Promise((v, r) => v(2))
+	const api = new Promise<number>((v, r) => v(2))
 	const api$ = Observable.of(3)
 	Store.setState({ a: 1 })
 	Store.setState(api.then(value => ({ a: value })))
