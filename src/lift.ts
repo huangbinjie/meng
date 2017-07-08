@@ -24,6 +24,7 @@ export const lift =
         private static displayName = `Meng(${displayName})`
         private static asyncResource: Array<AsyncResource<S>> = []
         private static listenResource: Array<ListenResource<S>> = []
+        private static onError = (err: any) => { }
         private hasStoreStateChanged: boolean
         private subscription: Subscription
 
@@ -69,6 +70,10 @@ export const lift =
           const currentStore = rootStore.children[displayName]
           this.subscription =
             currentStore.store$
+              .catch(err => {
+                LiftedComponent.onError(err)
+                return Observable.never()
+              })
               .filter(nextState => !shallowPartialEqual(this.state as {}, nextState))
               .subscribe((state: M & Extral<M>) => {
                 this.hasStoreStateChanged = true

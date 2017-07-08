@@ -199,8 +199,8 @@ test.cb("test with router", t => {
 
 	type ChildProps = { productionId: string, production?: { id: number, name: string } }
 	@listen((currentStore: ChildProps, nextStore: ChildProps) => {
-		console.log("currentStore", currentStore)
-		console.log("nextStore", nextStore)
+		// console.log("currentStore", currentStore)
+		// console.log("nextStore", nextStore)
 		return currentStore.productionId !== nextStore.productionId ? fetch(nextStore.productionId) : null
 	}, "production")
 	@lift({ production: {} })

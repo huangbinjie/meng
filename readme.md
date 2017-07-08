@@ -62,6 +62,10 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 
 可以监听lift里面的状态和其他injected数据源，但是没办法监听listen数据源.
 
+#### error: (errorHandler: (err: any) => void) => React.Component
+
+在 meng 把状态提升之后，状态不在只是 Object 了，它现在是 Maybe(Observable)，有可能会失败。输出成功的结果到组件，输出错误的结果到这个 errorhandler 里.
+
 ## Example
 
 展示一段我用meng写的博客里的代码吧:

@@ -53,5 +53,6 @@ const rootStore = new ImplStore()
 
 export { lift } from "./lift"
 export { inject, listen } from "./inject"
+export { error } from "./error"
 
 export default rootStore
