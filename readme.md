@@ -60,7 +60,7 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 
 ### listen: ((currentStore, nextStore) => any, string | (nextState, currentState) => object) => React.Component
 
-可以监听lift里面的状态和其他injected数据源，但是没办法监听listen数据源.
+可以监听 lift 里面的状态和其他 injected 数据源. 从3.4.0开始，也可以监听自己和其他 listen 数据源了，所以要判断好循环边界哦.
 
 ### error: (errorHandler: (err: any) => void) => React.Component
 

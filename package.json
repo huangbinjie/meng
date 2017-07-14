@@ -1,6 +1,6 @@
 {
   "name": "meng",
-  "version": "3.3.10",
+  "version": "3.4.0",
   "description": "an high order component for lift state and inject data source",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
