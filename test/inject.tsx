@@ -42,7 +42,7 @@ test.cb("inject observable", t => {
 test.cb("inject store", t => {
 	Store.setState({ userinfo: { name: "corol" } })
 
-	@inject(Store, (currentState, store: any) => ({ name: store.userinfo.name }))
+	@inject(Store, (store: any) => ({ name: store.userinfo.name }))
 	@lift({ a: 2 })
 	class App extends React.Component<any, any>{
 		public render() {
@@ -138,7 +138,7 @@ test.cb("listen resource should listen lift", t => {
 		b: number
 		c?: string
 	}
-	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (currentState, state: number) => ({ b: state }))
+	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (state: number, currentState) => ({ b: state }))
 	@lift({ a: 2 })
 	class App extends React.Component<Props, null>{
 		public render() {

@@ -5,7 +5,7 @@ export type Inject = ObservableInput<Object> | (() => any) | any
 
 export type Listen<S> = (currentStore: Partial<S>, nextStore: Partial<S>) => Inject
 
-export type Success<S> = string | ((currentState: S, value: S[keyof S]) => Partial<S>)
+export type Success<S> = string | ((value: S[keyof S], currentState: S) => Partial<S>)
 
 export type AsyncResource<S> = { source$: Inject, success: Success<S> }
 

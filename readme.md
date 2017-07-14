@@ -58,7 +58,7 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 + `Resource` 给组件注入数据源，可以是promise，也可以是其他组件的store，也可以是函数
 + `selector` 注入到react组件的props的变量的名称，可以是stirng也可以是返回一个对象(会覆盖store里的其他状态)
 
-### listen: ((currentStore, nextStore) => any, string | (currentState, nextState) => objectÏÏ) => React.Component
+### listen: ((currentStore, nextStore) => any, string | (nextState, currentState) => object) => React.Component
 
 可以监听lift里面的状态和其他injected数据源，但是没办法监听listen数据源.
 

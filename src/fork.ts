@@ -29,5 +29,5 @@ export function forkListen<S extends object, C extends Component<Partial<S>, S>>
 }
 
 export function implSelector<S, C extends Component<Partial<S>, S>, K extends keyof S>(this: C, state: S[K], success: Success<S>) {
-    return typeof success === "string" ? ({ [success]: state }) : success(this.state, state)
+    return typeof success === "string" ? ({ [success]: state }) : success(state, this.state)
 }
