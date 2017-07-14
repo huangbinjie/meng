@@ -138,7 +138,7 @@ test.cb("listen resource should listen lift", t => {
 		b: number
 		c?: string
 	}
-	@listen((currentStore: Props, nextStore: Props) => nextStore.a === 2 ? api : null, (state: number, currentState) => ({ b: state }))
+	@listen((currentStore: Props, nextStore: Props) => currentStore.a !== nextStore.a ? api : null, (state: number) => ({ b: state }))
 	@lift({ a: 2 })
 	class App extends React.Component<Props, null>{
 		public render() {
@@ -149,6 +149,28 @@ test.cb("listen resource should listen lift", t => {
 	t.is(wrapper.first().text(), "22")
 	setTimeout(() => {
 		t.is(wrapper.first().text(), "21")
+		t.end()
+	}, 1000)
+})
+
+test.cb("listen resource should listen recursively", t => {
+	t.plan(13)
+	const api = (n: number) => new Promise((v, r) => v(n + 1))
+	type Props = {
+		a?: number
+	}
+	@listen((currentStore: Props, nextStore: Props) => nextStore.a < 10 ? api(nextStore.a) : null, (state: number) => ({ a: state }))
+	@lift({ a: 0 })
+	class App extends React.Component<Props, null>{
+		public render() {
+			t.pass() // 0 - 10
+			return <div>{this.props.a}</div>
+		}
+	}
+	const wrapper = mount(<App />)
+	t.is(wrapper.first().text(), "0")
+	setTimeout(() => {
+		t.is(wrapper.first().text(), "10")
 		t.end()
 	}, 1000)
 })
@@ -164,7 +186,7 @@ test.cb("listen resource can listen other async resource", t => {
 	}
 	@listen((currentStore: Props, nextStore: Props) => {
 		// console.log(currentStore, nextStore)
-		return nextStore.b === 2 ? api4 : null
+		return currentStore.b !== nextStore.b && nextStore.b === 2 ? api4 : null
 	}, "c")
 	@inject(api2, "b")
 	@lift({ a: 2, b: 1 })
