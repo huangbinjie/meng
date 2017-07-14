@@ -27,6 +27,8 @@ export const lift =
         private static onError = (err: any) => { }
         private hasStoreStateChanged: boolean
         private subscription: Subscription
+        private listenResource$: Observable<Observable<M>>
+        private listenSubscription: Subscription
 
         public constructor(props: P) {
           super(props)
@@ -45,9 +47,9 @@ export const lift =
 
           const listenStore$ = state$.merge(store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
 
-          const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>).mergeAll()
+          this.listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>)
 
-          currentStore.store$ = store$.skipUntil(currentStore.state$).merge(listenResource$)
+          currentStore.store$ = store$.skipUntil(currentStore.state$)
 
         }
 
@@ -55,6 +57,7 @@ export const lift =
           delete rootStore.children[displayName]
           this.hasStoreStateChanged = false
           this.subscription.unsubscribe()
+          this.listenSubscription.unsubscribe()
         }
 
         public componentWillReceiveProps(nextProps: P) {
@@ -81,6 +84,11 @@ export const lift =
                 delete state._callback
                 this.setState(state, callback)
               })
+
+          /**
+           * 这是一个循环触发的监听数据源，循环边界是return null 或者 undefined
+           */
+          this.listenSubscription = this.listenResource$.subscribe(listenState$ => currentStore.state$.next(listenState$))
         }
 
         public shouldComponentUpdate() {
