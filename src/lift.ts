@@ -27,7 +27,6 @@ export const lift =
         private static onError = (err: any) => { }
         private hasStoreStateChanged: boolean
         private subscription: Subscription
-        private listenResource$: Observable<Observable<M>>
         private listenSubscription: Subscription
 
         public constructor(props: P) {
@@ -45,9 +44,9 @@ export const lift =
 
           const store$ = Observable.merge(currentStore.state$.mergeAll(), asyncResource$).publishReplay(1).refCount() as Observable<M>
 
-          const listenStore$ = state$.merge(store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
+          // const listenStore$ = state$.merge(store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
 
-          this.listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>)
+          // this.listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>)
 
           currentStore.store$ = store$.skipUntil(currentStore.state$)
 
@@ -68,9 +67,19 @@ export const lift =
          * 因为一方面willMount在Fiber出来之后会有优化，不断的调用和暂停，不适合在willMount写副作用，
          * 另一方面willMount是ssr中唯一调用的生命周期函数，而willunmount和didmount不会调用，会导致内存泄漏，
          * 所以在didmount监听和订阅
+         * 
+         * 监听有2个。
+         * 第一个是监听 Store: Observable<M>， 生成内部 state 的主分支。
+         * 第二个是监听 Store，生产 listenObservable: Observable<Observable<Partical<M>>> 的次要分支，他是一个高阶容器。
+         * 第二个分支生成 state，又刷新 state， 又监听 state。这是一个无限循环的操作，循环边界是 return void 0.
          */
         public componentDidMount() {
           const currentStore = rootStore.children[displayName]
+
+          const listenStore$ = currentStore.state$.merge(currentStore.store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
+
+          const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>)
+
           this.subscription =
             currentStore.store$
               .catch(err => {
@@ -85,10 +94,8 @@ export const lift =
                 this.setState(state, callback)
               })
 
-          /**
-           * 这是一个循环触发的监听数据源，循环边界是return null 或者 undefined
-           */
-          this.listenSubscription = this.listenResource$.subscribe(listenState$ => currentStore.state$.next(listenState$))
+          this.listenSubscription = listenResource$.subscribe(listenState$ => currentStore.state$.next(listenState$))
+
         }
 
         public shouldComponentUpdate() {
