@@ -10,7 +10,7 @@ type Props = {
     page: number
 }
 
-@listen<Props>((currentStore, nextStore) => fetchData, (currentState, state: Props["lis"]) => ({ lis: [...currentState.lis, ...state] }))
+@listen<Props>((currentStore, nextStore) => fetchData, (state: Props["lis"], currentState) => ({ lis: [...currentState.lis, ...state] }))
 @lift({ lis: [], page: 1 })
 class App extends React.Component<any, any> {
     render() {

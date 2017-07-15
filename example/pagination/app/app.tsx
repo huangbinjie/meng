@@ -12,7 +12,7 @@ type State = {
 
 @listen(fetchData, "lis")
 @lift({ lis: [], page: 1 })
-class App extends React.Component<{ lis?: any[], page?: number }, void> {
+class App extends React.Component<{ lis?: any[], page?: number }, {}> {
     render() {
         console.log(this.props)
         const lis = this.props.lis.map((n: string, i: number) => <li key={i} style={{ height: "20px", lineHeight: "20px" }}>{n}</li>)

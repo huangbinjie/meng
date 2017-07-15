@@ -18,9 +18,9 @@ type Props = {
 }
 
 
-@inject<Props>(getByCache, (currentState, cache) => cache === null ? {} : cache)
+@inject<Props>(getByCache, cache => cache === null ? {} : cache)
 @lift({ todos: [], display: "all" })
-export default class Todo extends React.Component<Props, void> {
+export default class Todo extends React.Component<Props, {}> {
 	public render() {
 		return (
 			<section className="todoapp">
