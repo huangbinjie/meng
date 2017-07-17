@@ -37,18 +37,10 @@ export const lift =
           const currentStore = new ImplStore(this.state)
 
           rootStore.children[displayName] = currentStore
-          // 初始state相对listenResource$来说应该是空的，但是相对组件来说是initialState，因为lift是同步的
-          const state$ = Observable.of({})
 
           const asyncResource$ = Observable.from(LiftedComponent.asyncResource).map(source => forkAsync.call(this, source) as Observable<M>).filter(state => state !== null).mergeAll()
 
-          const store$ = Observable.merge(currentStore.state$.mergeAll(), asyncResource$).publishReplay(1).refCount() as Observable<M>
-
-          // const listenStore$ = state$.merge(store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
-
-          // this.listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>)
-
-          currentStore.store$ = store$.skipUntil(currentStore.state$)
+          currentStore.store$ = Observable.merge(currentStore.state$.mergeAll(), asyncResource$).publishReplay(1).refCount() as Observable<M>
 
         }
 
@@ -82,9 +74,10 @@ export const lift =
 
           this.subscription =
             currentStore.store$
-              .catch(err => {
+              .skip(1)
+              .catch((err, caught) => {
                 LiftedComponent.onError(err)
-                return Observable.never()
+                return Observable.empty()
               })
               .filter(nextState => !shallowPartialEqual(this.state as {}, nextState))
               .subscribe((state: M & Extral<M>) => {

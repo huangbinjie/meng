@@ -5,7 +5,6 @@ import { Observable } from "rxjs"
 import { mount } from "enzyme"
 import Store, { ImplStore, lift } from "../src"
 
-
 test("lift statefull component", t => {
 	class StatefullApp extends React.Component<{ a: number }, null> {
 		public render() {
@@ -24,28 +23,16 @@ test("lift stateless component", t => {
 	t.is(wrapper.first().text(), "1")
 })
 
-test.cb("lift state should be synchronous", t => {
-	t.plan(2)
-	type Props = {
-		b?: number
-	}
-
-	@lift({ a: 2, b: 1 })
-	class StatefullApp extends React.Component<Props, null> {
-		public componentDidMount() {
-			t.is(this.props.b, 1)
-		}
+test("lift state should be synchronous", t => {
+	t.plan(1)
+	@lift({})
+	class StatefullApp extends React.Component<{}, null> {
 		public render() {
-			return <div>{this.props.b}</div>
+			t.pass()
+			return <div></div>
 		}
 	}
-
-	const wrapper = mount(<StatefullApp />)
-
-	setTimeout(() => {
-		t.is(wrapper.first().text(), "1")
-		t.end()
-	}, 0)
+	mount(<StatefullApp />)
 })
 
 test.cb("lifted component can receive data both props and store", t => {
@@ -138,7 +125,7 @@ test.cb("lifted store's subscribe should work", t => {
 	t.is(wrapper.first().text(), "2")
 })
 
-test("callback should not affect shallowEqual", t => {
+test("callback should not effect shallowEqual", t => {
 	t.plan(2)
 	@lift({ a: 2 })
 	class StatefullApp extends React.Component<{ a?: number }, null> {
