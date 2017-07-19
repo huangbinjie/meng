@@ -35,9 +35,8 @@ export class ImplStore<S> implements IStore<S> {
                 .catch((error, caught) => {
                     if (callback) {
                         callback(error)
-                        return Observable.empty()
                     }
-                    else return caught
+                    return Observable.throw(error)
                 })
             this.state$.next(nextState$)
         }

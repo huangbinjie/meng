@@ -79,8 +79,6 @@ export const lift =
                 const error = LiftedComponent.onError
                 if (error) {
                   error(err)
-                } else {
-                  throw err
                 }
                 return Observable.empty()
               })

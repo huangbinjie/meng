@@ -76,8 +76,8 @@ test("setState callback should work", t => {
 	})
 })
 
-test.cb("set a rejected promise should not call callback with error message", t => {
-	t.plan(3)
+test.cb("callback of setState will catch the error message", t => {
+	t.plan(4)
 	const store = new ImplStore({ a: 1 })
 	const api = new Promise((v, r) => {
 		JSON.parse("")
