@@ -3,4 +3,7 @@ node_modules
 npm-debug.log
 .DS_Store
 _test/
-src/**/*.js
+src/
+example/
+test/
+typings/

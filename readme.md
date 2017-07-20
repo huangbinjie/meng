@@ -64,7 +64,7 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 
 ### error: (errorHandler: (err: any) => void) => React.Component
 
-在 meng 把状态提升之后，状态不在只是 Object 了，它现在是 Maybe(Observable)，有可能会失败。输出成功的结果到组件，输出错误的结果到这个 errorhandler 里. 如果没有注册 error，则默认抛出 err。如果已经注册，则调用它。注意，如果 setState 出错，而且有回调的话，则只调用回调，不调用 error
+在 meng 把状态提升之后，状态不在只是 Object 了，它现在是 Maybe(Observable)，有可能会失败。输出成功的结果到组件，输出错误的结果到这个 errorhandler 里. 如果出错且没有注册 error，则什么事情都不会发生。如果已经注册，则调用它。注意，如果是通过 setState 传进去一个错误的 Observable 进去的话，只能在 setState 的 callback 捕获到异常信息
 
 ## Example
 

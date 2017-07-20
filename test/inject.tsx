@@ -210,7 +210,7 @@ test.cb("test with router", t => {
 		public state = { path: "/product/1" }
 		public componentDidMount() {
 			// simulate a route changed action
-			setTimeout(() => this.setState({ path: "/product/2" }), 1000)
+			setTimeout(() => this.setState({ path: "/product/2" }), 1500)
 		}
 		public render() {
 			// console.log("state", this.state)

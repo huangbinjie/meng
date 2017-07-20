@@ -77,7 +77,7 @@ test("setState callback should work", t => {
 })
 
 test.cb("callback of setState will catch the error message", t => {
-	t.plan(4)
+	t.plan(3)
 	const store = new ImplStore({ a: 1 })
 	const api = new Promise((v, r) => {
 		JSON.parse("")

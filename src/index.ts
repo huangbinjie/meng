@@ -25,7 +25,7 @@ export class ImplStore<S> implements IStore<S> {
         if (observableState) this.state$.next(observableState)
         this.store$ = this.state$.mergeAll().distinctUntilChanged(shallowPartialEqual).scan((acc: S, x: Partial<S>) => Object.assign(acc, x)) as Observable<S>
     }
-    // 如果 callback 不存在则继续往下抛，最终会被主分支的 catch 捕获到
+    // 如果 callback 存在则调用，不存在则输出错误信息
     public setState = (nextState: Partial<S> | ObservableInput<Partial<S>>, callback?: (error?: any) => void) => {
         const state$ = toObservable<S>(nextState)
         // .map(state => Object.assign(state, ...))会导致componentWillReceiveProps的setstate不工作
@@ -36,7 +36,7 @@ export class ImplStore<S> implements IStore<S> {
                     if (callback) {
                         callback(error)
                     }
-                    return Observable.throw(error)
+                    return Observable.empty()
                 })
             this.state$.next(nextState$)
         }

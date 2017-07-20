@@ -8,9 +8,9 @@ import { error } from "../src/error"
 
 test.cb("catch error", t => {
 	t.plan(4)
-	@error(err => t.is(1, err))
+	@error(err => t.is(1, err)) // 2
 	@inject(Promise.reject(1), "a")
-	@lift({})
+	@lift({}) // 1
 	class AppError extends React.Component<any, any>{
 		public render() {
 			t.pass()
@@ -18,9 +18,9 @@ test.cb("catch error", t => {
 		}
 	}
 	const meng = mount(<AppError />)
-	Store.children.AppError.setState({ a: 2 })
+	Store.children.AppError.setState({ a: 2 }) // 3
 	setTimeout(() => {
-		t.is(meng.first().text(), "2")
+		t.is(meng.first().text(), "2") // 4
 		t.end()
 	}, 1000)
 })
