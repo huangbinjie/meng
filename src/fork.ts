@@ -9,7 +9,7 @@ import toObservable from "./utils/toObservable"
  * never也是一种Observable，会导致forkListen的switch切换到never，从而把不该取消的上一个数据源给释放掉了。
  */
 export function forkAsync<S extends object, C extends Component<Partial<S>, S>>(this: C, { source$, success }: AsyncResource<S>): Observable<S> | null {
-    if (source$ instanceof Function) return forkAsync.call(this, { source$: source$(), success })
+    if (source$ instanceof Function) return forkAsync.call(this, { source$: source$(this.state), success })
     else {
         const state$ = toObservable(source$)
         return state$ ? state$.map(state => implSelector.call(this, state, success)) : null

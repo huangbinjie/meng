@@ -15,12 +15,6 @@ npm i meng --save
 并且能用react的方式解决问题呢，答案是肯定的，我们可以这么设计`({props, state, api}) => dom`。于是就有了meng--一个把所有数据源都抽象合并成一种数据类型的库。
 由于只有rxjs能帮我们实现流的特性，所以meng@3.x是强依赖rxjs的。
 
-redux使用场景有限，一套action,reducer,store你可能觉得很清晰，还不错。但是项目增长之后，就会很混乱了，如果分工不够明细的话，反而会很痛苦。
-还有个问题，就是你没办法区分哪些应该存在store里面，哪些存在local state里面。
-最后有个redux最致命的缺陷：redux是同步的。虽然你可以用thunk，saga这些库解决这个问题，但是又要上升到另一个问题的纠纷了...
-
-mengbi就是基于这些缺陷出发，我们只需要轻松的写好数据源，理由函数组合的优势，随意组合数据源和组件了。
-
 ## api
 
 ### Store
@@ -55,7 +49,7 @@ lift函数可以把react组件提升为meng组件，他只有两个参数：
 
 ### inject: (Resource, string | (currentState, nextState) => object) => React.Component
 
-+ `Resource` 给组件注入数据源，可以是promise，也可以是其他组件的store，也可以是函数
++ `Resource` 给组件注入数据源，可以是promise，也可以是其他组件的store，也可以是函数。如果是函数，则第一个参数是  initialState，包括父级传下来的属性。
 + `selector` 注入到react组件的props的变量的名称，可以是stirng也可以是返回一个对象(会覆盖store里的其他状态)
 
 ### listen: ((currentStore, nextStore) => any, string | (nextState, currentState) => object) => React.Component
@@ -183,3 +177,6 @@ mengbi.jsÏ
 ## 其他
 
 发现一款和我思路很像的库，强烈建议看看[freactal](https://github.com/FormidableLabs/freactal)
+发现第二个和我思路很像的库，preact版本，可以说这个库的思路和我基本是完全一样了: [wiretie](https://github.com/synacor/wiretie)
+
+另附一篇我之前写的文章[我为什么不用redux](http://react-china.org/t/redux/11832)

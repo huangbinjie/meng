@@ -58,7 +58,7 @@ test.cb("inject store", t => {
 })
 
 test.cb("inject function", t => {
-	@inject(() => 1, "b")
+	@inject<{ a: number }>(store => store.a === 2 ? 1 : 3, "b")
 	@lift({ a: 2 })
 	class App extends React.Component<any, any>{
 		public render() {
