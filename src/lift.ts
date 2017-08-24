@@ -68,7 +68,7 @@ export const lift =
         public componentDidMount() {
           const currentStore = rootStore.children[displayName]
 
-          const listenStore$ = currentStore.state$.merge(currentStore.store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
+          const listenStore$ = Observable.of({}).merge(currentStore.store$).scan((store, nextState) => Object.assign({}, store, nextState)).pairwise()
 
           const listenResource$ = Observable.from(LiftedComponent.listenResource).map(source => forkListen.call(this, source, listenStore$) as Observable<M>)
 
