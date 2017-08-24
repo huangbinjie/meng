@@ -3,7 +3,7 @@ import { ComponentClass } from "react"
 
 export type Inject<S> = ObservableInput<Object> | ((store: Partial<S>) => any)
 
-export type Listen<S> = (currentStore: Partial<S>, nextStore: Partial<S>) => Inject<S>
+export type Listen<S> = (currentStore: Partial<S>, nextStore: Partial<S>) => any
 
 export type Success<S> = string | ((value: S[keyof S], currentState: S) => Partial<S>)
 

@@ -1,5 +1,6 @@
 {
 	"compilerOptions": {
+		"strict": true,
 		"experimentalDecorators": true,
 		"target": "es5",
 		"jsx": "react",

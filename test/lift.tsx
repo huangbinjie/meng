@@ -6,7 +6,7 @@ import { mount } from "enzyme"
 import Store, { ImplStore, lift } from "../src"
 
 test("lift statefull component", t => {
-	class StatefullApp extends React.Component<{ a: number }, null> {
+	class StatefullApp extends React.Component<{ a: number }, {}> {
 		public render() {
 			return <div>{this.props.a}</div>
 		}
@@ -26,7 +26,7 @@ test("lift stateless component", t => {
 test("lift state should be synchronous", t => {
 	t.plan(1)
 	@lift({})
-	class StatefullApp extends React.Component<{}, null> {
+	class StatefullApp extends React.Component<{}, {}> {
 		public render() {
 			t.pass()
 			return <div></div>
@@ -42,7 +42,7 @@ test.cb("lifted component can receive data both props and store", t => {
 	}
 
 	@lift({ a: 2, b: 1 })
-	class StatefullApp extends React.Component<Props, null> {
+	class StatefullApp extends React.Component<Props, {}> {
 		public render() {
 			return <div>{this.props.a}{this.props.b}</div>
 		}
@@ -60,7 +60,7 @@ test("lifted component should inject store to rootStore's children", t => {
 	t.plan(2)
 
 	@lift({ a: 2 })
-	class StatefullApp extends React.Component<{ a?: number }, null> {
+	class StatefullApp extends React.Component<{ a?: number }, {}> {
 		public render() {
 			return <div>{this.props.a}</div>
 		}
@@ -75,7 +75,7 @@ test("lifted component should inject store to rootStore's children", t => {
 
 test.cb("lifted component's store can be set at any scope", t => {
 	@lift({ a: 2 })
-	class StatefullApp extends React.Component<{ a?: number }, null> {
+	class StatefullApp extends React.Component<{ a?: number }, {}> {
 		public render() {
 			return <div>{this.props.a}</div>
 		}
@@ -89,7 +89,7 @@ test.cb("lifted component's store can be set at any scope", t => {
 
 test.cb("setState's callback should work", t => {
 	@lift({ a: 2 })
-	class StatefullApp1 extends React.Component<{ a?: number, setState?: (state: object, cb?: () => void) => {} }, null> {
+	class StatefullApp1 extends React.Component<{ a?: number, setState?: (state: object, cb?: () => void) => {} }, {}> {
 		public componentDidMount() {
 			setTimeout(() => {
 				Store.children.StatefullApp1.setState({ a: 3 }, () => {
@@ -111,7 +111,7 @@ test.cb("setState's callback should work", t => {
 test.cb("lifted store's subscribe should work", t => {
 	t.plan(3)
 	@lift({ a: 2 })
-	class StatefullApp extends React.Component<{ a?: number }, null> {
+	class StatefullApp extends React.Component<{ a?: number }, {}> {
 		public render() {
 			return <div>{this.props.a}</div>
 		}
@@ -128,7 +128,7 @@ test.cb("lifted store's subscribe should work", t => {
 test("callback should not effect shallowEqual", t => {
 	t.plan(2)
 	@lift({ a: 2 })
-	class StatefullApp extends React.Component<{ a?: number }, null> {
+	class StatefullApp extends React.Component<{ a?: number }, {}> {
 		public render() {
 			return <div>{this.props.a}</div>
 		}

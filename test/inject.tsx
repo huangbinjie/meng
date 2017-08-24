@@ -140,7 +140,7 @@ test.cb("listen resource should listen lift", t => {
 	}
 	@listen((currentStore: Props, nextStore: Props) => currentStore.a !== nextStore.a ? api : null, (state: number) => ({ b: state }))
 	@lift({ a: 2 })
-	class App extends React.Component<Props, null>{
+	class App extends React.Component<Props, {}>{
 		public render() {
 			return <div>{this.props.a}{this.props.b}</div>
 		}
@@ -159,9 +159,9 @@ test.cb("listen resource should listen recursively", t => {
 	type Props = {
 		a?: number
 	}
-	@listen((currentStore: Props, nextStore: Props) => nextStore.a < 10 ? api(nextStore.a) : null, (state: number) => ({ a: state }))
+	@listen((currentStore: Props, nextStore: Props) => nextStore.a! < 10 ? api(nextStore.a!) : null, (state: number) => ({ a: state }))
 	@lift({ a: 0 })
-	class App extends React.Component<Props, null>{
+	class App extends React.Component<Props, {}>{
 		public render() {
 			t.pass() // 0 - 10
 			return <div>{this.props.a}</div>
@@ -190,7 +190,7 @@ test.cb("listen resource can listen other async resource", t => {
 	}, "c")
 	@inject(api2, "b")
 	@lift({ a: 2, b: 1 })
-	class App extends React.Component<Props, null>{
+	class App extends React.Component<Props, {}>{
 		public render() {
 			++count
 			return <div>{this.props.a}{this.props.b}{this.props.c}</div>
@@ -214,7 +214,7 @@ test.cb("test with router", t => {
 		}
 		public render() {
 			// console.log("state", this.state)
-			const productId = this.state.path.match(/\/.+\/(\d)/)[1]
+			const productId = this.state.path.match(/\/.+\/(\d)/)![1]
 			return <Child productionId={productId} />
 		}
 	}
@@ -230,7 +230,7 @@ test.cb("test with router", t => {
 		public render() {
 			// console.log(this.props)
 			return <div>
-				{this.props.production.name}
+				{this.props.production && this.props.production.name}
 			</div>
 		}
 	}
